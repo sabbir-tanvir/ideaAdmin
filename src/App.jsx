@@ -4,6 +4,7 @@ import DashboardLayout from './components/Layout/DashboardLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
+import Products from './pages/Products';
 import './styles/layout.css';
 
 function App() {
@@ -20,7 +21,7 @@ function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="users" element={<Users />} />
-        {/* <Route path="products" element={<Products />} /> */}
+        <Route path="products" element={<Products />} />
         {/* <Route path="orders" element={<Orders />} /> */}
         {/* <Route path="analytics" element={<Analytics />} /> */}
         {/* <Route path="notifications" element={<Notifications />} /> */}
