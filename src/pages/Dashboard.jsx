@@ -1,4 +1,7 @@
+import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import API from '../api/axios';
 import {
   HiOutlineUsers,
   HiOutlineShoppingBag,
@@ -6,39 +9,70 @@ import {
   HiOutlineCurrencyDollar,
 } from 'react-icons/hi2';
 
-const statCards = [
-  {
-    label: 'Total Users',
-    value: '—',
-    icon: HiOutlineUsers,
-    color: '#6366f1',
-    bg: 'rgba(99, 102, 241, 0.12)',
-  },
-  {
-    label: 'Products',
-    value: '—',
-    icon: HiOutlineShoppingBag,
-    color: '#10b981',
-    bg: 'rgba(16, 185, 129, 0.12)',
-  },
-  {
-    label: 'Orders',
-    value: '—',
-    icon: HiOutlineDocumentText,
-    color: '#f59e0b',
-    bg: 'rgba(245, 158, 11, 0.12)',
-  },
-  {
-    label: 'Revenue',
-    value: '—',
-    icon: HiOutlineCurrencyDollar,
-    color: '#ef4444',
-    bg: 'rgba(239, 68, 68, 0.12)',
-  },
-];
-
 const Dashboard = () => {
   const { user } = useAuth();
+  const [stats, setStats] = useState({
+    users: '—',
+    products: '—',
+    orders: '—',
+    revenue: '—',
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [usersRes, coursesRes] = await Promise.all([
+          API.get('/users'),
+          API.get('/courses')
+        ]);
+        
+        setStats(prev => ({
+          ...prev,
+          users: usersRes.data.success ? usersRes.data.count || usersRes.data.data.length : '—',
+          products: coursesRes.data.success ? coursesRes.data.count || coursesRes.data.data.length : '—',
+        }));
+      } catch (err) {
+        console.error('Failed to fetch dashboard stats', err);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  const statCards = [
+    {
+      label: 'Total Users',
+      value: stats.users,
+      icon: HiOutlineUsers,
+      color: '#6366f1',
+      bg: 'rgba(99, 102, 241, 0.12)',
+      path: '/dashboard/users',
+    },
+    {
+      label: 'Products',
+      value: stats.products,
+      icon: HiOutlineShoppingBag,
+      color: '#10b981',
+      bg: 'rgba(16, 185, 129, 0.12)',
+      path: '/dashboard/products',
+    },
+    {
+      label: 'Orders',
+      value: stats.orders,
+      icon: HiOutlineDocumentText,
+      color: '#f59e0b',
+      bg: 'rgba(245, 158, 11, 0.12)',
+      path: '/dashboard/orders',
+    },
+    {
+      label: 'Revenue',
+      value: stats.revenue,
+      icon: HiOutlineCurrencyDollar,
+      color: '#ef4444',
+      bg: 'rgba(239, 68, 68, 0.12)',
+      path: '/dashboard/analytics',
+    },
+  ];
 
   return (
     <div className="dashboard-page">
@@ -49,7 +83,7 @@ const Dashboard = () => {
 
       <div className="dashboard-page__stats">
         {statCards.map((card) => (
-          <div className="stat-card" key={card.label}>
+          <Link to={card.path} className="stat-card" style={{ textDecoration: 'none' }} key={card.label}>
             <div className="stat-card__icon" style={{ backgroundColor: card.bg, color: card.color }}>
               <card.icon />
             </div>
@@ -57,7 +91,7 @@ const Dashboard = () => {
               <p className="stat-card__label">{card.label}</p>
               <h3 className="stat-card__value">{card.value}</h3>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
 
