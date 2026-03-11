@@ -3,6 +3,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Users from './pages/Users';
 import './styles/layout.css';
 
 function App() {
@@ -18,8 +19,7 @@ function App() {
         }
       >
         <Route index element={<Dashboard />} />
-        {/* Future nested routes will go here */}
-        {/* <Route path="users" element={<Users />} /> */}
+        <Route path="users" element={<Users />} />
         {/* <Route path="products" element={<Products />} /> */}
         {/* <Route path="orders" element={<Orders />} /> */}
         {/* <Route path="analytics" element={<Analytics />} /> */}
