@@ -61,7 +61,7 @@ const Payments = () => {
   const handleUpdateStatus = async (paymentId) => {
     try {
       setStatusUpdating(true);
-      const res = await API.put(`/payments/${paymentId}/status`, { status: newStatus });
+      const res = await API.patch(`/payments/${paymentId}/status`, { status: newStatus });
       setPayments((prev) => 
         prev.map((p) => p.id === paymentId ? { ...p, status: newStatus } : p)
       );
@@ -276,9 +276,7 @@ const Payments = () => {
                   className="status-confirm__select"
                 >
                   <option value="SUCCESS">SUCCESS</option>
-                  <option value="APPROVED">APPROVED</option>
                   <option value="PENDING">PENDING</option>
-                  <option value="REJECTED">REJECTED</option>
                   <option value="FAILED">FAILED</option>
                 </select>
               </div>
