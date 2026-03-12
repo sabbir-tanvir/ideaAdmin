@@ -7,7 +7,7 @@
   flex-direction: column;
   gap: 1.5rem;
   padding: 1rem 0;
-  max-width: 1200px;
+  width: 100%;
   position: relative;
 }
 
@@ -219,17 +219,20 @@
 }
 
 .status-badge--success {
-  background: rgba(16, 185, 129, 0.12); /* light matching var(--color-success) but fixed */
+  background: rgba(16, 185, 129, 0.12);
+  /* light matching var(--color-success) but fixed */
   color: var(--color-success);
 }
 
 .status-badge--pending {
-  background: rgba(245, 158, 11, 0.12); /* light matching var(--color-warning) */
+  background: rgba(245, 158, 11, 0.12);
+  /* light matching var(--color-warning) */
   color: var(--color-warning);
 }
 
 .status-badge--failed {
-  background: rgba(239, 68, 68, 0.12); /* light matching var(--color-danger) */
+  background: rgba(239, 68, 68, 0.12);
+  /* light matching var(--color-danger) */
   color: var(--color-danger);
 }
 
