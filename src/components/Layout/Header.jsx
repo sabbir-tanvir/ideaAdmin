@@ -40,7 +40,7 @@ const Header = ({ onMenuToggle }) => {
         >
           <HiOutlineBars3 />
         </button>
-
+{/* 
         <div className="header__search">
           <HiOutlineMagnifyingGlass className="header__search-icon" />
           <input
@@ -49,7 +49,7 @@ const Header = ({ onMenuToggle }) => {
             placeholder="Search..."
             id="header-search-input"
           />
-        </div>
+        </div> */}
       </div>
 
       {/* Right section */}
@@ -65,10 +65,10 @@ const Header = ({ onMenuToggle }) => {
         </button>
 
         {/* Notifications */}
-        <button className="header__icon-btn" title="Notifications" id="notifications-btn">
+        {/* <button className="header__icon-btn" title="Notifications" id="notifications-btn">
           <HiOutlineBell />
           <span className="header__badge">3</span>
-        </button>
+        </button> */}
 
         {/* User dropdown */}
         <div className="header__user" ref={dropdownRef}>

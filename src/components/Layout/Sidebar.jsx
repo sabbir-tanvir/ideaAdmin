@@ -16,9 +16,7 @@ const navItems = [
   { label: 'Dashboard', icon: HiOutlineHome, path: '/dashboard' },
   { label: 'Users', icon: HiOutlineUsers, path: '/dashboard/users' },
   { label: 'Products', icon: HiOutlineShoppingBag, path: '/dashboard/products' },
-  { label: 'Orders', icon: HiOutlineDocumentText, path: '/dashboard/orders' },
-  { label: 'Analytics', icon: HiOutlineChartBarSquare, path: '/dashboard/analytics' },
-  { label: 'Notifications', icon: HiOutlineBellAlert, path: '/dashboard/notifications' },
+  { label: 'Payments', icon: HiOutlineDocumentText, path: '/dashboard/payments' },
   { label: 'Settings', icon: HiOutlineCog6Tooth, path: '/dashboard/settings' },
 ];
 

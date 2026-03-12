@@ -1,0 +1,436 @@
+/* ============================================
+   PAYMENTS PAGE
+   ============================================ */
+
+.payments-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  max-width: 1200px;
+  position: relative;
+}
+
+.payments-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.payments-page__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.payments-page__title-icon {
+  color: var(--color-accent);
+  font-size: 1.6rem;
+}
+
+.payments-page__subtitle {
+  color: var(--color-text-secondary);
+  margin: 4px 0 0 0;
+  font-size: 0.9rem;
+}
+
+/* ---- Toolbar ---- */
+.payments-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.payments-toolbar__search {
+  position: relative;
+  flex: 1;
+  min-width: 240px;
+  max-width: 400px;
+  display: flex;
+  align-items: center;
+}
+
+.payments-toolbar__search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--color-text-tertiary);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.payments-toolbar__search-input {
+  width: 100%;
+  padding: 10px 40px 10px 42px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  transition: border-color var(--transition-fast);
+  outline: none;
+}
+
+.payments-toolbar__search-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.payments-toolbar__search-input:focus {
+  border-color: var(--color-accent);
+}
+
+.payments-toolbar__search-clear {
+  position: absolute;
+  right: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: none;
+  font-size: 1rem;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.payments-toolbar__search-clear:hover {
+  background: var(--color-bg-card-hover);
+  color: var(--color-text-primary);
+}
+
+/* ---- Table ---- */
+.payments-table-wrapper {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.payments-table thead {
+  background: var(--color-bg-tertiary);
+}
+
+.payments-table th,
+.payments-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.payments-table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.payments-table td {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.payments-table__row {
+  transition: background-color var(--transition-fast);
+}
+
+.payments-table__row:hover {
+  background-color: var(--color-bg-card-hover);
+}
+
+.payments-table__row:last-child td {
+  border-bottom: none;
+}
+
+.payments-table__id {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+
+.payments-table__user {
+  display: flex;
+  flex-direction: column;
+}
+
+.payments-table__name {
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+}
+
+.payments-table__email {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.payments-table__course {
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.payments-table__amount {
+  font-weight: 600;
+  color: var(--color-success);
+}
+
+.payments-table__date,
+.payments-table__method,
+.payments-table__txn {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.payments-table__empty {
+  text-align: center;
+  padding: 48px 16px !important;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* ---- Status Badges ---- */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.status-badge--success {
+  background: rgba(16, 185, 129, 0.12); /* light matching var(--color-success) but fixed */
+  color: var(--color-success);
+}
+
+.status-badge--pending {
+  background: rgba(245, 158, 11, 0.12); /* light matching var(--color-warning) */
+  color: var(--color-warning);
+}
+
+.status-badge--failed {
+  background: rgba(239, 68, 68, 0.12); /* light matching var(--color-danger) */
+  color: var(--color-danger);
+}
+
+.status-badge--default {
+  background: rgba(107, 114, 128, 0.12);
+  color: var(--color-text-secondary);
+}
+
+/* ---- Actions ---- */
+.payments-table__actions {
+  display: flex;
+  gap: 6px;
+}
+
+/* We reuse .action-btn from users.css but redefine it locally if needed to match design 
+   since it's not global */
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  transition: all var(--transition-fast);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.action-btn--edit {
+  color: var(--color-accent);
+}
+
+.action-btn--edit:hover {
+  background: var(--color-accent-subtle);
+}
+
+/* ---- Status Modal Overrides (Modal class comes from standard) ---- */
+.status-confirm h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.status-confirm p {
+  color: var(--color-text-secondary);
+  font-size: 0.88rem;
+  margin-bottom: 24px;
+}
+
+.status-confirm__form {
+  margin-bottom: 24px;
+}
+
+.status-confirm__form label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.status-confirm__select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  outline: none;
+  background-color: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+  transition: border-color var(--transition-fast);
+}
+
+.status-confirm__select:focus {
+  border-color: var(--color-accent);
+}
+
+.status-confirm__select option {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.status-confirm__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.status-confirm__btn {
+  padding: 10px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  cursor: pointer;
+  border: none;
+}
+
+.status-confirm__btn--cancel {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+}
+
+.status-confirm__btn--cancel:hover:not(:disabled) {
+  background: var(--color-bg-card-hover);
+  color: var(--color-text-primary);
+}
+
+.status-confirm__btn--update {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+.status-confirm__btn--update:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.status-confirm__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ---- Loading state ---- */
+.payments-table-skeleton {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.payments-table-skeleton__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.payments-table-skeleton__row:last-child {
+  border-bottom: none;
+}
+
+/* ---- Error ---- */
+.payments-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: var(--color-text-tertiary);
+  font-size: 1.6rem;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.payments-error p {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.payments-error button {
+  padding: 8px 20px;
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: opacity var(--transition-fast);
+  margin-top: 8px;
+}
+
+.payments-error button:hover {
+  opacity: 0.9;
+}
+
+/* ---- Page footer ---- */
+.payments-page__footer {
+  text-align: right;
+  color: var(--color-text-tertiary);
+  font-size: 0.8rem;
+  margin-top: 16px;
+}
+
+@media (max-width: 900px) {
+  .payments-table-wrapper {
+    overflow-x: auto;
+  }
+}

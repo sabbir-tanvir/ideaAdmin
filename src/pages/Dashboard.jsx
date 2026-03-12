@@ -14,22 +14,24 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     users: '—',
     products: '—',
-    orders: '—',
+    payments: '—',
     revenue: '—',
   });
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const [usersRes, coursesRes] = await Promise.all([
+        const [usersRes, coursesRes, paymentsRes] = await Promise.all([
           API.get('/users'),
-          API.get('/courses')
+          API.get('/courses'),
+          API.get('/payments')
         ]);
         
         setStats(prev => ({
           ...prev,
           users: usersRes.data.success ? usersRes.data.count || usersRes.data.data.length : '—',
           products: coursesRes.data.success ? coursesRes.data.count || coursesRes.data.data.length : '—',
+          payments: paymentsRes.data.success ? paymentsRes.data.count || paymentsRes.data.data.length : '—',
         }));
       } catch (err) {
         console.error('Failed to fetch dashboard stats', err);
@@ -57,12 +59,12 @@ const Dashboard = () => {
       path: '/dashboard/products',
     },
     {
-      label: 'Orders',
-      value: stats.orders,
+      label: 'Payments',
+      value: stats.payments,
       icon: HiOutlineDocumentText,
       color: '#f59e0b',
       bg: 'rgba(245, 158, 11, 0.12)',
-      path: '/dashboard/orders',
+      path: '/dashboard/payments',
     },
     {
       label: 'Revenue',
@@ -108,7 +110,7 @@ const Dashboard = () => {
         </div>
         <div className="placeholder-card">
           <h3>📋 Recent Activity</h3>
-          <p>Recent orders and user activity will be displayed here.</p>
+          <p>Recent payments and user activity will be displayed here.</p>
           <div className="placeholder-card__skeleton">
             <div className="skeleton-bar" style={{ width: '70%' }} />
             <div className="skeleton-bar" style={{ width: '85%' }} />

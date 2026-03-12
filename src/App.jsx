@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Products from './pages/Products';
+import Payments from './pages/Payments';
 import './styles/layout.css';
 
 function App() {
@@ -22,7 +23,7 @@ function App() {
         <Route index element={<Dashboard />} />
         <Route path="users" element={<Users />} />
         <Route path="products" element={<Products />} />
-        {/* <Route path="orders" element={<Orders />} /> */}
+        <Route path="payments" element={<Payments />} />
         {/* <Route path="analytics" element={<Analytics />} /> */}
         {/* <Route path="notifications" element={<Notifications />} /> */}
         {/* <Route path="settings" element={<Settings />} /> */}
