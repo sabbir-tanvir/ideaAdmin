@@ -28,8 +28,22 @@ const formatDate = (iso) => {
   });
 };
 
+// Helper to get full URL for images
+const getFullUrl = (path) => {
+  if (!path) return null;
+  // Replace Windows backslashes with forward slashes for URLs
+  const normalizedPath = path.replace(/\\/g, '/');
+  if (normalizedPath.startsWith('blob:') || normalizedPath.startsWith('http')) return normalizedPath;
+  return normalizedPath.startsWith('/')
+    ? `https://idea-backend-03b4.onrender.com${normalizedPath}`
+    : `https://idea-backend-03b4.onrender.com/${normalizedPath}`;
+};
+
 // Helper to get cover URL from blog object
-const getCoverUrl = (blog) => blog?.coverImage?.url || blog?.mainPhoto || null;
+const getCoverUrl = (blog) => {
+  const path = blog?.coverImage?.url || blog?.mainPhoto || null;
+  return getFullUrl(path);
+};
 
 // ========== Main Component ==========
 const Blogs = () => {
@@ -373,7 +387,7 @@ const Blogs = () => {
                   {blog.gallery.map((img, i) => (
                     <img
                       key={i}
-                      src={typeof img === 'string' ? img : img.url}
+                      src={getFullUrl(typeof img === 'string' ? img : img.url)}
                       alt={`Gallery ${i + 1}`}
                       className="blog-detail__gallery-img"
                     />
@@ -638,7 +652,7 @@ const Blogs = () => {
                 <label>Cover Photo</label>
                 {mainPhotoPreview ? (
                   <div className="upload-preview">
-                    <img src={mainPhotoPreview} alt="Cover" className="upload-preview__img" />
+                    <img src={getFullUrl(mainPhotoPreview)} alt="Cover" className="upload-preview__img" />
                     <button type="button" className="upload-preview__remove" onClick={removeMainPhoto}>
                       <HiOutlineXMark />
                     </button>
@@ -668,7 +682,7 @@ const Blogs = () => {
                   <div className="upload-gallery-grid">
                     {existingGallery.map((item) => (
                       <div key={`existing-${item.id}`} className="upload-gallery-item">
-                        <img src={item.url} alt={`Gallery`} className="upload-gallery-item__img" />
+                        <img src={getFullUrl(item.url)} alt={`Gallery`} className="upload-gallery-item__img" />
                         <button type="button" className="upload-gallery-item__remove" onClick={() => removeExistingGalleryItem(item)}>
                           <HiOutlineXMark />
                         </button>
