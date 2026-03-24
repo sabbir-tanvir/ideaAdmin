@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Products from './pages/Products';
 import Payments from './pages/Payments';
+import Blogs from './pages/Blogs';
 import './styles/layout.css';
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
         <Route path="users" element={<Users />} />
         <Route path="products" element={<Products />} />
         <Route path="payments" element={<Payments />} />
+        <Route path="blogs" element={<Blogs />} />
         {/* <Route path="analytics" element={<Analytics />} /> */}
         {/* <Route path="notifications" element={<Notifications />} /> */}
         {/* <Route path="settings" element={<Settings />} /> */}
