@@ -58,8 +58,10 @@ const Blogs = () => {
   // File upload states
   const [mainPhotoFile, setMainPhotoFile] = useState(null);
   const [mainPhotoPreview, setMainPhotoPreview] = useState(null);
-  const [galleryFiles, setGalleryFiles] = useState([]);
-  const [galleryPreviews, setGalleryPreviews] = useState([]);
+  const [galleryFiles, setGalleryFiles] = useState([]); // new File objects
+  const [galleryPreviews, setGalleryPreviews] = useState([]); // blob URLs for new files
+  const [existingGallery, setExistingGallery] = useState([]); // {id, url} from API
+  const [removedGalleryIds, setRemovedGalleryIds] = useState([]); // IDs to remove on edit
   const mainPhotoRef = useRef(null);
   const galleryRef = useRef(null);
 
@@ -110,6 +112,8 @@ const Blogs = () => {
     setMainPhotoPreview(null);
     setGalleryFiles([]);
     setGalleryPreviews([]);
+    setExistingGallery([]);
+    setRemovedGalleryIds([]);
     setShowFormModal(true);
   };
 
@@ -135,36 +139,33 @@ const Blogs = () => {
     if (galleryRef.current) galleryRef.current.value = '';
   };
 
-  const removeGalleryItem = (index) => {
+  const removeNewGalleryItem = (index) => {
     setGalleryFiles((prev) => prev.filter((_, i) => i !== index));
     setGalleryPreviews((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const buildPayload = () => {
+  const removeExistingGalleryItem = (galleryItem) => {
+    setExistingGallery((prev) => prev.filter((g) => g.id !== galleryItem.id));
+    setRemovedGalleryIds((prev) => [...prev, galleryItem.id]);
+  };
+
+  const buildFormData = () => {
+    const fd = new FormData();
+    fd.append('title', formData.title);
+    fd.append('slug', formData.slug || generateSlug(formData.title));
+    fd.append('description', formData.description);
     const tags = formData.tags ? formData.tags.split(',').map((t) => t.trim()).filter(Boolean) : [];
-    const payload = {
-      title: formData.title,
-      slug: formData.slug || generateSlug(formData.title),
-      description: formData.description,
-      tags,
-    };
-    // mainPhoto: use file name if a new file was selected, or keep existing preview URL
+    tags.forEach((tag) => fd.append('tags', tag));
     if (mainPhotoFile) {
-      payload.mainPhoto = `/uploads/${mainPhotoFile.name}`;
-    } else if (mainPhotoPreview && !mainPhotoPreview.startsWith('blob:')) {
-      payload.mainPhoto = mainPhotoPreview;
+      fd.append('coverImage', mainPhotoFile);
     }
-    // gallery: mix of new file names and existing URLs
-    const galleryPaths = galleryPreviews.map((src, i) => {
-      if (src.startsWith('blob:') && galleryFiles[i]) {
-        return `/uploads/${galleryFiles[i].name}`;
-      }
-      return src;
-    }).filter(Boolean);
-    if (galleryPaths.length > 0) {
-      payload.gallery = galleryPaths;
+    galleryFiles.forEach((file) => {
+      fd.append('gallery', file);
+    });
+    if (removedGalleryIds.length > 0) {
+      fd.append('removeGalleryIds', removedGalleryIds.join(','));
     }
-    return payload;
+    return fd;
   };
 
   const handleCreate = async (e) => {
@@ -175,8 +176,10 @@ const Blogs = () => {
     }
     try {
       setFormLoading(true);
-      const payload = buildPayload();
-      const res = await API.post('/blogs', payload);
+      const fd = buildFormData();
+      const res = await API.post('/blogs', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       if (res.data.success || res.data.data) {
         fetchBlogs();
         setShowFormModal(false);
@@ -203,8 +206,11 @@ const Blogs = () => {
     setMainPhotoFile(null);
     setMainPhotoPreview(blog.coverImage?.url || blog.mainPhoto || null);
     setGalleryFiles([]);
-    setGalleryPreviews(
-      (blog.gallery || []).map((g) => (typeof g === 'string' ? g : g.url || '')).filter(Boolean)
+    setGalleryPreviews([]);
+    setRemovedGalleryIds([]);
+    // Store existing gallery items with their IDs
+    setExistingGallery(
+      (blog.gallery || []).filter((g) => typeof g === 'object' && g.id).map((g) => ({ id: g.id, url: g.url }))
     );
     setShowFormModal(true);
   };
@@ -217,8 +223,10 @@ const Blogs = () => {
     }
     try {
       setFormLoading(true);
-      const payload = buildPayload();
-      await API.put(`/blogs/${formData.id}`, payload);
+      const fd = buildFormData();
+      await API.put(`/blogs/${formData.id}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
       fetchBlogs();
       setShowFormModal(false);
       if (selectedBlog?.id === formData.id) setSelectedBlog(null);
@@ -655,12 +663,22 @@ const Blogs = () => {
               {/* Gallery Upload */}
               <div className="create-form__field">
                 <label>Gallery Images</label>
-                {galleryPreviews.length > 0 && (
+                {/* Existing gallery items (from API, have IDs) */}
+                {(existingGallery.length > 0 || galleryPreviews.length > 0) && (
                   <div className="upload-gallery-grid">
+                    {existingGallery.map((item) => (
+                      <div key={`existing-${item.id}`} className="upload-gallery-item">
+                        <img src={item.url} alt={`Gallery`} className="upload-gallery-item__img" />
+                        <button type="button" className="upload-gallery-item__remove" onClick={() => removeExistingGalleryItem(item)}>
+                          <HiOutlineXMark />
+                        </button>
+                      </div>
+                    ))}
+                    {/* New gallery files */}
                     {galleryPreviews.map((src, i) => (
-                      <div key={i} className="upload-gallery-item">
-                        <img src={src} alt={`Gallery ${i + 1}`} className="upload-gallery-item__img" />
-                        <button type="button" className="upload-gallery-item__remove" onClick={() => removeGalleryItem(i)}>
+                      <div key={`new-${i}`} className="upload-gallery-item">
+                        <img src={src} alt={`New ${i + 1}`} className="upload-gallery-item__img" />
+                        <button type="button" className="upload-gallery-item__remove" onClick={() => removeNewGalleryItem(i)}>
                           <HiOutlineXMark />
                         </button>
                       </div>
