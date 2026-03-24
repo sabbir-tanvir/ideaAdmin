@@ -28,6 +28,9 @@ const formatDate = (iso) => {
   });
 };
 
+// Helper to get cover URL from blog object
+const getCoverUrl = (blog) => blog?.coverImage?.url || blog?.mainPhoto || null;
+
 // ========== Main Component ==========
 const Blogs = () => {
   const [blogs, setBlogs] = useState([]);
@@ -303,11 +306,16 @@ const Blogs = () => {
 
         <div className="blog-detail__card">
           {/* Cover image */}
-          {blog.coverImage?.url && (
-            <div className="blog-detail__cover-wrap">
-              <img src={blog.coverImage.url} alt={blog.title} className="blog-detail__cover" />
-            </div>
-          )}
+          <div className="blog-detail__cover-wrap">
+            {getCoverUrl(blog) ? (
+              <img src={getCoverUrl(blog)} alt={blog.title} className="blog-detail__cover" />
+            ) : (
+              <div className="blog-detail__cover-placeholder">
+                <HiOutlinePhoto />
+                <span>No cover image</span>
+              </div>
+            )}
+          </div>
 
           <div className="blog-detail__body">
             <div className="blog-detail__top-row">
@@ -318,7 +326,7 @@ const Blogs = () => {
                 <button className="blog-detail__action-btn blog-detail__action-btn--publish" onClick={() => togglePublish(blog)}>
                   {blog.published ? 'Unpublish' : 'Publish'}
                 </button>
-                <button className="blog-detail__action-btn blog-detail__action-btn--edit" onClick={() => openEditModal(blog)}>
+                <button className="blog-detail__action-btn blog-detail__action-btn--edit" onClick={() => { setSelectedBlog(null); openEditModal(blog); }}>
                   <HiOutlinePencilSquare /> Edit
                 </button>
                 <button className="blog-detail__action-btn blog-detail__action-btn--delete" onClick={() => setDeleteTarget(blog)}>
@@ -350,9 +358,9 @@ const Blogs = () => {
               </div>
             )}
 
-            {blog.gallery && blog.gallery.length > 0 && (
-              <div className="blog-detail__section">
-                <h3><HiOutlinePhoto /> Gallery</h3>
+            <div className="blog-detail__section">
+              <h3><HiOutlinePhoto /> Gallery</h3>
+              {blog.gallery && blog.gallery.length > 0 ? (
                 <div className="blog-detail__gallery">
                   {blog.gallery.map((img, i) => (
                     <img
@@ -363,8 +371,13 @@ const Blogs = () => {
                     />
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <div className="blog-detail__gallery-empty">
+                  <HiOutlinePhoto />
+                  <span>No gallery images</span>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -492,8 +505,8 @@ const Blogs = () => {
                   <td className="blogs-table__id">#{blog.id}</td>
                   <td>
                     <div className="blogs-table__title-cell">
-                      {blog.coverImage?.url ? (
-                        <img src={blog.coverImage.url} alt="" className="blogs-table__thumb" />
+                      {getCoverUrl(blog) ? (
+                        <img src={getCoverUrl(blog)} alt="" className="blogs-table__thumb" />
                       ) : (
                         <div className="blogs-table__thumb-placeholder">
                           <HiOutlineDocumentText />
