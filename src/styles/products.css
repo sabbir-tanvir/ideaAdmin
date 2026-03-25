@@ -591,6 +591,87 @@
   transform: rotate(180deg);
 }
 
+/* Curriculum Action Buttons */
+.course-curriculum__header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.course-curriculum__header-row .course-detail__section-title {
+  margin-bottom: 0;
+}
+
+.course-curriculum__add-btn {
+  font-size: 0.82rem;
+  padding: 6px 14px;
+}
+
+.module-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.module-card__action-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.module-card__header:hover .module-card__action-btns {
+  opacity: 1;
+}
+
+.curriculum-action-btn {
+  background: transparent;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  transition: all var(--transition-fast);
+}
+
+.curriculum-action-btn:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.curriculum-action-btn--add:hover {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.curriculum-action-btn--edit:hover {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--color-accent);
+}
+
+.curriculum-action-btn--delete:hover {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--color-danger);
+}
+
+.lesson-row:hover .curriculum-action-btn {
+  opacity: 1;
+}
+
+.lesson-row .curriculum-action-btn {
+  opacity: 0;
+  margin-left: 8px;
+}
+
+.shrink-0 {
+  flex-shrink: 0;
+}
+
 /* Lessons */
 .module-card__lessons {
   border-top: 1px solid var(--color-border);

@@ -45,6 +45,9 @@ const getCoverUrl = (blog) => {
   return getFullUrl(path);
 };
 
+console.log(getCoverUrl);
+
+
 // ========== Main Component ==========
 const Blogs = () => {
   const [blogs, setBlogs] = useState([]);

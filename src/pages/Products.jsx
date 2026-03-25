@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import API from '../api/axios';
+import CourseCurriculum from '../components/Products/CourseCurriculum';
 import {
   HiOutlineMagnifyingGlass,
   HiOutlinePlus,
@@ -59,7 +60,6 @@ const Products = () => {
 
   // Detail view
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [expandedModules, setExpandedModules] = useState({});
 
   // Create form
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -83,6 +83,7 @@ const Products = () => {
       const res = await API.get('/courses');
       if (res.data.success) {
         setCourses(res.data.data);
+        setSelectedCourse((prev) => prev ? res.data.data.find((c) => c.id === prev.id) || prev : null);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to fetch courses');
@@ -131,11 +132,6 @@ const Products = () => {
     }
   };
 
-  // Toggle module expansion
-  const toggleModule = (moduleId) => {
-    setExpandedModules((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }));
-  };
-
   // Filter & search
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
@@ -157,7 +153,6 @@ const Products = () => {
   // ==================== COURSE DETAIL VIEW ====================
   if (selectedCourse) {
     const course = selectedCourse;
-    const sortedModules = [...(course.modules || [])].sort((a, b) => a.sortOrder - b.sortOrder);
 
     return (
       <div className="products-page">
@@ -206,72 +201,11 @@ const Products = () => {
         </div>
 
         {/* Modules & Lessons */}
-        <div className="course-detail__curriculum">
-          <h2 className="course-detail__section-title">
-            <HiOutlineAcademicCap /> Course Curriculum
-          </h2>
-
-          {sortedModules.length === 0 ? (
-            <div className="course-detail__empty">
-              <p>No modules added yet.</p>
-            </div>
-          ) : (
-            <div className="modules-list">
-              {sortedModules.map((module) => {
-                const sortedLessons = [...(module.lessons || [])].sort((a, b) => a.sortOrder - b.sortOrder);
-                const isExpanded = expandedModules[module.id];
-
-                return (
-                  <div key={module.id} className="module-card">
-                    <button
-                      className="module-card__header"
-                      onClick={() => toggleModule(module.id)}
-                    >
-                      <div className="module-card__left">
-                        <span className="module-card__order">{module.sortOrder}</span>
-                        <div>
-                          <h3 className="module-card__title">{module.title}</h3>
-                          <p className="module-card__meta">
-                            {sortedLessons.length} lessons
-                            {sortedLessons.length > 0 && ` • ${formatDuration(sortedLessons.reduce((a, l) => a + (l.duration || 0), 0))}`}
-                          </p>
-                        </div>
-                      </div>
-                      <span className={`module-card__chevron ${isExpanded ? 'module-card__chevron--open' : ''}`}>
-                        <HiOutlineChevronDown />
-                      </span>
-                    </button>
-
-                    {isExpanded && (
-                      <div className="module-card__lessons">
-                        {sortedLessons.length === 0 ? (
-                          <p className="module-card__empty">No lessons in this module.</p>
-                        ) : (
-                          sortedLessons.map((lesson) => (
-                            <div key={lesson.id} className="lesson-row">
-                              <div className="lesson-row__left">
-                                <HiOutlineFilm className="lesson-row__icon" />
-                                <div>
-                                  <p className="lesson-row__title">{lesson.title}</p>
-                                  <span className="lesson-row__duration">{formatDuration(lesson.duration)}</span>
-                                </div>
-                              </div>
-                              <div className="lesson-row__right">
-                                {lesson.isPreview && (
-                                  <span className="preview-badge">Preview</span>
-                                )}
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        <CourseCurriculum
+          course={course}
+          onUpdate={fetchCourses}
+          showNotification={showNotification}
+        />
       </div>
     );
   }
