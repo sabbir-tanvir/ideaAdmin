@@ -387,7 +387,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 500;
+  z-index: 1100;
   padding: 20px;
   animation: overlayIn 0.2s ease;
 }
@@ -609,7 +609,7 @@
   border-radius: var(--radius-sm);
   font-size: 0.875rem;
   font-weight: 500;
-  z-index: 600;
+  z-index: 1200;
   animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: var(--shadow-lg);
 }
