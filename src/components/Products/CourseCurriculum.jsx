@@ -8,10 +8,10 @@ import {
   HiOutlineTrash,
   HiOutlinePencilSquare,
   HiOutlineXMark,
-  HiOutlineCloudArrowUp,
   HiOutlineCheckCircle,
   HiOutlineExclamationTriangle
 } from 'react-icons/hi2';
+import LessonQuizzesModal from './LessonQuizzesModal';
 
 const formatDuration = (seconds) => {
   if (!seconds) return '—';
@@ -39,6 +39,9 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
 
   // Delete Confirm Modal
   const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'module'|'lesson', id, title }
+
+  // Quizzes Modal
+  const [selectedLessonForQuizzes, setSelectedLessonForQuizzes] = useState(null);
 
   const toggleModule = (moduleId) => {
     setExpandedModules((prev) => ({ ...prev, [moduleId]: !prev[moduleId] }));
@@ -253,6 +256,9 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
                             {lesson.isPreview && (
                               <span className="preview-badge">Preview</span>
                             )}
+                            <button className="curriculum-action-btn curriculum-action-btn--edit shrink-0" onClick={(e) => { e.stopPropagation(); setSelectedLessonForQuizzes(lesson); }} title="Manage Quizzes" style={{ color: 'var(--color-accent)' }}>
+                              <HiOutlineAcademicCap />
+                            </button>
                             <button className="curriculum-action-btn curriculum-action-btn--delete shrink-0" onClick={(e) => confirmDelete(e, 'lesson', lesson)} title="Delete Lesson">
                               <HiOutlineTrash />
                             </button>
@@ -389,6 +395,14 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* --- LESSON QUIZZES MODAL --- */}
+      {selectedLessonForQuizzes && (
+        <LessonQuizzesModal
+          lesson={selectedLessonForQuizzes}
+          onClose={() => setSelectedLessonForQuizzes(null)}
+        />
       )}
     </div>
   );
