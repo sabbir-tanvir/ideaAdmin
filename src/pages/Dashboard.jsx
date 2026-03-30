@@ -17,6 +17,7 @@ const Dashboard = () => {
     payments: '—',
     revenue: '—',
   });
+  const [recentActivities, setRecentActivities] = useState([]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -26,13 +27,44 @@ const Dashboard = () => {
           API.get('/courses'),
           API.get('/payments')
         ]);
+        const usersList = usersRes.data.success ? usersRes.data.data : (Array.isArray(usersRes.data) ? usersRes.data : []);
+        const productsList = coursesRes.data.success ? coursesRes.data.data : (Array.isArray(coursesRes.data) ? coursesRes.data : []);
+        const paymentsList = paymentsRes.data.success ? paymentsRes.data.data : (Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
         
-        setStats(prev => ({
-          ...prev,
-          users: usersRes.data.success ? usersRes.data.count || usersRes.data.data.length : '—',
-          products: coursesRes.data.success ? coursesRes.data.count || coursesRes.data.data.length : '—',
-          payments: paymentsRes.data.success ? paymentsRes.data.count || paymentsRes.data.data.length : '—',
-        }));
+        // Calculate Revenue from SUCCESS payments
+        const totalRevenue = paymentsList
+          .filter(p => p.status === 'SUCCESS' || p.status === 'APPROVED')
+          .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+          
+        setStats({
+          users: usersList.length,
+          products: productsList.length,
+          payments: paymentsList.length,
+          revenue: `৳${totalRevenue.toLocaleString()}`,
+        });
+        
+        // Generate Recent Activities
+        const combinedActivities = [
+          ...usersList.map(u => ({ 
+            id: `u-${u.id}`, 
+            type: 'USER', 
+            date: u.createdAt, 
+            title: 'New User Registered',
+            desc: `${u.name} just joined the platform.` 
+          })),
+          ...paymentsList.map(p => ({ 
+            id: `p-${p.id}`, 
+            type: 'PAYMENT', 
+            date: p.createdAt, 
+            title: 'Payment Received',
+            desc: `${p.user?.name || 'A user'} paid ৳${p.amount} via ${p.paymentMethod}.` 
+          }))
+        ];
+        
+        // Sort by date newest first, and take top 5
+        combinedActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
+        setRecentActivities(combinedActivities.slice(0, 5));
+        
       } catch (err) {
         console.error('Failed to fetch dashboard stats', err);
       }
@@ -72,7 +104,7 @@ const Dashboard = () => {
       icon: HiOutlineCurrencyDollar,
       color: '#ef4444',
       bg: 'rgba(239, 68, 68, 0.12)',
-      path: '/dashboard/analytics',
+      path: '/dashboard/payments', // Analytics removed, linking to payments
     },
   ];
 
@@ -97,25 +129,26 @@ const Dashboard = () => {
         ))}
       </div>
 
-      <div className="dashboard-page__placeholder">
-        <div className="placeholder-card">
-          <h3>📊 Analytics Overview</h3>
-          <p>Charts and analytics will appear here once connected to the API endpoints.</p>
-          <div className="placeholder-card__skeleton">
-            <div className="skeleton-bar" style={{ width: '80%' }} />
-            <div className="skeleton-bar" style={{ width: '60%' }} />
-            <div className="skeleton-bar" style={{ width: '90%' }} />
-            <div className="skeleton-bar" style={{ width: '45%' }} />
-          </div>
-        </div>
+      <div className="dashboard-page__placeholder" style={{ gridTemplateColumns: 'minmax(340px, 600px)' }}>
         <div className="placeholder-card">
           <h3>📋 Recent Activity</h3>
-          <p>Recent payments and user activity will be displayed here.</p>
-          <div className="placeholder-card__skeleton">
-            <div className="skeleton-bar" style={{ width: '70%' }} />
-            <div className="skeleton-bar" style={{ width: '85%' }} />
-            <div className="skeleton-bar" style={{ width: '55%' }} />
-            <div className="skeleton-bar" style={{ width: '75%' }} />
+          <p>Latest platform events and transactions.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '16px' }}>
+            {recentActivities.length === 0 ? (
+              <p style={{ color: 'var(--color-text-tertiary)', fontStyle: 'italic' }}>No recent activities found.</p>
+            ) : (
+              recentActivities.map(activity => (
+                <div key={activity.id} style={{ display: 'flex', flexDirection: 'column', gap: '4px', paddingBottom: '12px', borderBottom: '1px solid var(--color-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--color-text-primary)' }}>{activity.title}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)' }}>
+                      {new Date(activity.date).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-secondary)' }}>{activity.desc}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </div>
