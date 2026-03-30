@@ -1,0 +1,309 @@
+/* ============================================
+   MESSAGES PAGE
+   ============================================ */
+
+.messages-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  position: relative;
+}
+
+.messages-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.messages-page__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.messages-page__title-icon {
+  color: var(--color-accent);
+  font-size: 1.6rem;
+}
+
+.messages-page__subtitle {
+  color: var(--color-text-secondary);
+  margin: 4px 0 0 0;
+  font-size: 0.9rem;
+}
+
+/* ---- Table ---- */
+.messages-table-wrapper {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  overflow-x: auto;
+}
+
+.messages-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.messages-table thead {
+  background: var(--color-bg-tertiary);
+}
+
+.messages-table th,
+.messages-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.messages-table th {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.messages-table td {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.messages-table__row {
+  transition: background-color var(--transition-fast);
+}
+
+.messages-table__row:hover {
+  background-color: var(--color-bg-card-hover);
+}
+
+.messages-table__row:last-child td {
+  border-bottom: none;
+}
+
+.messages-table__id {
+  font-size: 0.8rem;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+
+.messages-table__name {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.messages-table__email {
+  color: var(--color-text-secondary);
+}
+
+.messages-table__subject {
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.messages-table__message {
+  color: var(--color-text-secondary);
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.messages-table__empty {
+  text-align: center;
+  padding: 48px 16px !important;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+/* ---- Pagination ---- */
+.messages-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+  padding: 8px 0;
+}
+
+.messages-pagination__info {
+  font-size: 0.875rem;
+  color: var(--color-text-tertiary);
+}
+
+.messages-pagination__controls {
+  display: flex;
+  gap: 8px;
+}
+
+.messages-pagination__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.messages-pagination__btn:hover:not(:disabled) {
+  background: var(--color-bg-card-hover);
+  color: var(--color-text-primary);
+  border-color: var(--color-border-hover);
+}
+
+.messages-pagination__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--color-bg-tertiary);
+}
+
+/* ---- Actions ---- */
+.messages-table__actions {
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  font-size: 1.1rem;
+  transition: all var(--transition-fast);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.action-btn--view {
+  color: var(--color-accent);
+}
+
+.action-btn--view:hover {
+  background: var(--color-accent-subtle);
+}
+
+.action-btn--delete {
+  color: var(--color-danger);
+}
+
+.action-btn--delete:hover {
+  background: var(--color-danger-bg);
+}
+
+/* ---- Loading & Error ---- */
+.messages-table-skeleton {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.messages-table-skeleton__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 14px 8px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.messages-table-skeleton__row:last-child {
+  border-bottom: none;
+}
+
+.messages-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 12px;
+  color: var(--color-text-tertiary);
+  font-size: 1.6rem;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.messages-error p {
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* ---- View Modal ---- */
+.message-detail {
+  padding: 8px 0;
+}
+
+.message-detail__row {
+  display: flex;
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.message-detail__row:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.message-detail__col {
+  flex: 1;
+}
+
+.message-detail__label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.message-detail__value {
+  font-size: 0.95rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.message-detail__valuea {
+  color: var(--color-accent);
+  text-decoration: none;
+}
+
+.message-detail__valuea:hover {
+  text-decoration: underline;
+}
+
+.message-detail__body {
+  margin-top: 12px;
+  background: var(--color-bg-tertiary);
+  padding: 16px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  border: 1px solid var(--color-border);
+}

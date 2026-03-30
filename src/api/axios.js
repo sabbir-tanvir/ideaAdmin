@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'https://idea-backend-03b4.onrender.com/api/v1',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://idea-backend-03b4.onrender.com/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },

@@ -10,6 +10,7 @@ import {
   HiOutlineBellAlert,
   HiOutlineNewspaper,
   HiOutlineCalendar,
+  HiOutlineEnvelope,
   HiChevronLeft,
   HiChevronRight,
 } from 'react-icons/hi2';
@@ -21,6 +22,7 @@ const navItems = [
   { label: 'Payments', icon: HiOutlineDocumentText, path: '/dashboard/payments' },
   { label: 'Blogs', icon: HiOutlineNewspaper, path: '/dashboard/blogs' },
   { label: 'Events', icon: HiOutlineCalendar, path: '/dashboard/events' },
+  { label: 'Messages', icon: HiOutlineEnvelope, path: '/dashboard/messages' },
   { label: 'Settings', icon: HiOutlineCog6Tooth, path: '/dashboard/settings' },
 ];
 

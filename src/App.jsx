@@ -8,6 +8,7 @@ import Products from './pages/Products';
 import Payments from './pages/Payments';
 import Blogs from './pages/Blogs';
 import Events from './pages/Events';
+import Messages from './pages/Messages';
 import './styles/layout.css';
 
 function App() {
@@ -28,6 +29,7 @@ function App() {
         <Route path="payments" element={<Payments />} />
         <Route path="blogs" element={<Blogs />} />
         <Route path="events" element={<Events />} />
+        <Route path="messages" element={<Messages />} />
         {/* <Route path="analytics" element={<Analytics />} /> */}
         {/* <Route path="notifications" element={<Notifications />} /> */}
         {/* <Route path="settings" element={<Settings />} /> */}
