@@ -9,7 +9,8 @@ import {
   HiOutlinePencilSquare,
   HiOutlineXMark,
   HiOutlineCheckCircle,
-  HiOutlineExclamationTriangle
+  HiOutlineExclamationTriangle,
+  HiOutlineCloudArrowUp
 } from 'react-icons/hi2';
 import LessonQuizzesModal from './LessonQuizzesModal';
 
