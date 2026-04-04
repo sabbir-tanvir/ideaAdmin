@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import API from '../api/axios';
 import CourseCurriculum from '../components/Products/CourseCurriculum';
 import {
@@ -21,6 +21,8 @@ import {
   HiOutlineFilm,
   HiOutlineTrash,
   HiOutlinePencilSquare,
+  HiOutlineCloudArrowUp,
+  HiOutlinePhoto,
 } from 'react-icons/hi2';
 import '../styles/products.css';
 
@@ -68,16 +70,32 @@ const Products = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCourseId, setEditingCourseId] = useState(null);
   const [createLoading, setCreateLoading] = useState(false);
+  const [thumbnailFile, setThumbnailFile] = useState(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
+  const thumbnailRef = useRef(null);
   const [createForm, setCreateForm] = useState({
     title: '',
     description: '',
-    thumbnail: '',
     duration: '',
     level: 'BEGINNER',
     language: 'English',
     price: '',
     status: 'DRAFT',
   });
+
+  const handleThumbnailSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setThumbnailFile(file);
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const clearThumbnail = () => {
+    setThumbnailFile(null);
+    setThumbnailPreview(null);
+    if (thumbnailRef.current) thumbnailRef.current.value = '';
+  };
 
   // Fetch courses
   const fetchCourses = async () => {
@@ -111,22 +129,24 @@ const Products = () => {
     setCreateForm({
       title: course.title || '',
       description: course.description || '',
-      thumbnail: course.thumbnail || '',
       duration: course.duration || '',
       level: course.level || 'BEGINNER',
       language: course.language || 'English',
       price: course.price || '',
       status: course.status || 'DRAFT',
     });
+    setThumbnailFile(null);
+    setThumbnailPreview(course.thumbnail || null);
     setShowCreateModal(true);
   };
 
   const openCreateModal = () => {
     setEditingCourseId(null);
     setCreateForm({
-      title: '', description: '', thumbnail: '', duration: '',
+      title: '', description: '', duration: '',
       level: 'BEGINNER', language: 'English', price: '', status: 'DRAFT',
     });
+    clearThumbnail();
     setShowCreateModal(true);
   };
 
@@ -138,26 +158,35 @@ const Products = () => {
     }
     try {
       setCreateLoading(true);
-      const payload = {
-        ...createForm,
-        duration: Number(createForm.duration) || 0,
-        price: Number(createForm.price) || 0,
-      };
+      const fd = new FormData();
+      fd.append('title', createForm.title);
+      fd.append('description', createForm.description);
+      fd.append('duration', Number(createForm.duration) || 0);
+      fd.append('price', Number(createForm.price) || 0);
+      fd.append('level', createForm.level);
+      fd.append('language', createForm.language);
+      fd.append('status', createForm.status);
+      if (thumbnailFile) {
+        fd.append('thumbnail', thumbnailFile);
+      }
 
       if (editingCourseId) {
-        const res = await API.put(`/courses/${editingCourseId}`, payload);
+        const res = await API.put(`/courses/${editingCourseId}`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         if (res.data.success) {
-          setCourses((prev) => prev.map((c) => (c.id === editingCourseId ? { ...c, ...res.data.data } : c)));
-          setSelectedCourse((prev) => (prev?.id === editingCourseId ? { ...prev, ...res.data.data } : prev));
-          setShowCreateModal(false);
           showNotification('Course updated successfully');
+          setShowCreateModal(false);
+          fetchCourses();
         }
       } else {
-        const res = await API.post('/courses', payload);
+        const res = await API.post('/courses', fd, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
         if (res.data.success) {
-          setCourses((prev) => [{ ...res.data.data, modules: [] }, ...prev]);
-          setShowCreateModal(false);
           showNotification('Course created successfully');
+          setShowCreateModal(false);
+          fetchCourses();
         }
       }
     } catch (err) {
@@ -277,15 +306,25 @@ const Products = () => {
               </button>
               <h2 className="modal__title">{editingCourseId ? 'Edit Course' : 'Create New Course'}</h2>
               <form className="create-form" onSubmit={handleSubmit}>
-                <div className="create-form__row">
-                  <div className="create-form__field">
-                    <label>Title *</label>
-                    <input type="text" value={createForm.title} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })} placeholder="Course title" autoFocus />
-                  </div>
-                  <div className="create-form__field">
-                    <label>Thumbnail URL</label>
-                    <input type="text" value={createForm.thumbnail} onChange={(e) => setCreateForm({ ...createForm, thumbnail: e.target.value })} placeholder="https://example.com/image.jpg" />
-                  </div>
+                <div className="create-form__field">
+                  <label>Title *</label>
+                  <input type="text" value={createForm.title} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })} placeholder="Course title" autoFocus />
+                </div>
+                <div className="create-form__field">
+                  <label>Thumbnail</label>
+                  {thumbnailPreview ? (
+                    <div className="upload-preview" style={{ position: 'relative' }}>
+                      <img src={thumbnailPreview} alt="Thumbnail" style={{ width: '100%', maxHeight: '160px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+                      <button type="button" className="upload-preview__remove" onClick={clearThumbnail}><HiOutlineXMark /></button>
+                    </div>
+                  ) : (
+                    <div className="upload-zone" onClick={() => thumbnailRef.current?.click()}>
+                      <HiOutlineCloudArrowUp className="upload-zone__icon" />
+                      <p className="upload-zone__text">Click to upload thumbnail</p>
+                      <span className="upload-zone__hint">JPG, PNG, WebP</span>
+                    </div>
+                  )}
+                  <input ref={thumbnailRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleThumbnailSelect} />
                 </div>
                 <div className="create-form__field">
                   <label>Description *</label>
@@ -516,17 +555,15 @@ const Products = () => {
             <h2 className="modal__title">{editingCourseId ? 'Edit Course' : 'Create New Course'}</h2>
 
             <form className="create-form" onSubmit={handleSubmit}>
-              <div className="create-form__row">
-                <div className="create-form__field">
-                  <label>Title *</label>
-                  <input
-                    type="text"
-                    value={createForm.title}
-                    onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
-                    placeholder="e.g. Spoken English Mastery"
-                    id="course-title-input"
-                  />
-                </div>
+              <div className="create-form__field">
+                <label>Title *</label>
+                <input
+                  type="text"
+                  value={createForm.title}
+                  onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
+                  placeholder="e.g. Spoken English Mastery"
+                  id="course-title-input"
+                />
               </div>
 
               <div className="create-form__field">
@@ -541,14 +578,20 @@ const Products = () => {
               </div>
 
               <div className="create-form__field">
-                <label>Thumbnail URL</label>
-                <input
-                  type="url"
-                  value={createForm.thumbnail}
-                  onChange={(e) => setCreateForm({ ...createForm, thumbnail: e.target.value })}
-                  placeholder="https://example.com/image.jpg"
-                  id="course-thumb-input"
-                />
+                <label>Thumbnail</label>
+                {thumbnailPreview ? (
+                  <div className="upload-preview" style={{ position: 'relative' }}>
+                    <img src={thumbnailPreview} alt="Thumbnail" style={{ width: '100%', maxHeight: '160px', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+                    <button type="button" className="upload-preview__remove" onClick={clearThumbnail}><HiOutlineXMark /></button>
+                  </div>
+                ) : (
+                  <div className="upload-zone" onClick={() => thumbnailRef.current?.click()}>
+                    <HiOutlineCloudArrowUp className="upload-zone__icon" />
+                    <p className="upload-zone__text">Click to upload thumbnail</p>
+                    <span className="upload-zone__hint">JPG, PNG, WebP</span>
+                  </div>
+                )}
+                <input ref={thumbnailRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleThumbnailSelect} />
               </div>
 
               <div className="create-form__row create-form__row--3">
