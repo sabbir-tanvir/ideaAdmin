@@ -11,6 +11,7 @@ import {
   HiOutlineNewspaper,
   HiOutlineCalendar,
   HiOutlineEnvelope,
+  HiOutlineComputerDesktop,
   HiChevronLeft,
   HiChevronRight,
 } from 'react-icons/hi2';
@@ -23,6 +24,7 @@ const navItems = [
   { label: 'Blogs', icon: HiOutlineNewspaper, path: '/dashboard/blogs' },
   { label: 'Events', icon: HiOutlineCalendar, path: '/dashboard/events' },
   { label: 'Messages', icon: HiOutlineEnvelope, path: '/dashboard/messages' },
+  { label: 'Sessions', icon: HiOutlineComputerDesktop, path: '/dashboard/sessions' },
 ];
 
 const Sidebar = ({ collapsed, onToggle }) => {
