@@ -19,6 +19,8 @@ import {
   HiOutlineExclamationTriangle,
   HiOutlineArrowLeft,
   HiOutlineFilm,
+  HiOutlineTrash,
+  HiOutlinePencilSquare,
 } from 'react-icons/hi2';
 import '../styles/products.css';
 
@@ -60,9 +62,11 @@ const Products = () => {
 
   // Detail view
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
-  // Create form
+  // Create/Edit form
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingCourseId, setEditingCourseId] = useState(null);
   const [createLoading, setCreateLoading] = useState(false);
   const [createForm, setCreateForm] = useState({
     title: '',
@@ -101,8 +105,32 @@ const Products = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Create course
-  const handleCreate = async (e) => {
+  // Create / Edit course
+  const openEditModal = (course) => {
+    setEditingCourseId(course.id);
+    setCreateForm({
+      title: course.title || '',
+      description: course.description || '',
+      thumbnail: course.thumbnail || '',
+      duration: course.duration || '',
+      level: course.level || 'BEGINNER',
+      language: course.language || 'English',
+      price: course.price || '',
+      status: course.status || 'DRAFT',
+    });
+    setShowCreateModal(true);
+  };
+
+  const openCreateModal = () => {
+    setEditingCourseId(null);
+    setCreateForm({
+      title: '', description: '', thumbnail: '', duration: '',
+      level: 'BEGINNER', language: 'English', price: '', status: 'DRAFT',
+    });
+    setShowCreateModal(true);
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!createForm.title.trim() || !createForm.description.trim()) {
       showNotification('Please fill in all required fields', 'error');
@@ -115,20 +143,43 @@ const Products = () => {
         duration: Number(createForm.duration) || 0,
         price: Number(createForm.price) || 0,
       };
-      const res = await API.post('/courses', payload);
-      if (res.data.success) {
-        setCourses((prev) => [{ ...res.data.data, modules: [] }, ...prev]);
-        setShowCreateModal(false);
-        setCreateForm({
-          title: '', description: '', thumbnail: '', duration: '',
-          level: 'BEGINNER', language: 'English', price: '', status: 'DRAFT',
-        });
-        showNotification('Course created successfully');
+
+      if (editingCourseId) {
+        const res = await API.put(`/courses/${editingCourseId}`, payload);
+        if (res.data.success) {
+          setCourses((prev) => prev.map((c) => (c.id === editingCourseId ? { ...c, ...res.data.data } : c)));
+          setSelectedCourse((prev) => (prev?.id === editingCourseId ? { ...prev, ...res.data.data } : prev));
+          setShowCreateModal(false);
+          showNotification('Course updated successfully');
+        }
+      } else {
+        const res = await API.post('/courses', payload);
+        if (res.data.success) {
+          setCourses((prev) => [{ ...res.data.data, modules: [] }, ...prev]);
+          setShowCreateModal(false);
+          showNotification('Course created successfully');
+        }
       }
     } catch (err) {
-      showNotification(err.response?.data?.message || 'Failed to create course', 'error');
+      showNotification(err.response?.data?.message || 'Failed to save course', 'error');
     } finally {
       setCreateLoading(false);
+    }
+  };
+
+  const executeDeleteCourse = async () => {
+    if (!deleteTarget) return;
+    try {
+      setLoading(true);
+      await API.delete(`/courses/${deleteTarget.id}`);
+      showNotification('Course deleted successfully');
+      setCourses((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      if (selectedCourse?.id === deleteTarget.id) setSelectedCourse(null);
+      setDeleteTarget(null);
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Failed to delete course', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -163,10 +214,20 @@ const Products = () => {
           </div>
         )}
 
-        {/* Back button */}
-        <button className="course-detail__back" onClick={() => setSelectedCourse(null)}>
-          <HiOutlineArrowLeft /> Back to Courses
-        </button>
+        {/* Actions header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <button className="course-detail__back" onClick={() => setSelectedCourse(null)} style={{ marginBottom: 0 }}>
+            <HiOutlineArrowLeft /> Back to Courses
+          </button>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <button className="btn btn--outline" onClick={() => openEditModal(course)} style={{ padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
+              <HiOutlinePencilSquare /> Edit Course
+            </button>
+            <button className="btn btn--danger" onClick={() => setDeleteTarget(course)} style={{ padding: '6px 14px', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem' }}>
+              <HiOutlineTrash /> Delete
+            </button>
+          </div>
+        </div>
 
         {/* Course header */}
         <div className="course-detail__header">
@@ -206,6 +267,90 @@ const Products = () => {
           onUpdate={fetchCourses}
           showNotification={showNotification}
         />
+
+        {/* ===== Create/Edit Modal (shared) ===== */}
+        {showCreateModal && (
+          <div className="modal-overlay" onClick={() => !createLoading && setShowCreateModal(false)}>
+            <div className="modal modal--lg" onClick={(e) => e.stopPropagation()}>
+              <button className="modal__close" onClick={() => setShowCreateModal(false)}>
+                <HiOutlineXMark />
+              </button>
+              <h2 className="modal__title">{editingCourseId ? 'Edit Course' : 'Create New Course'}</h2>
+              <form className="create-form" onSubmit={handleSubmit}>
+                <div className="create-form__row">
+                  <div className="create-form__field">
+                    <label>Title *</label>
+                    <input type="text" value={createForm.title} onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })} placeholder="Course title" autoFocus />
+                  </div>
+                  <div className="create-form__field">
+                    <label>Thumbnail URL</label>
+                    <input type="text" value={createForm.thumbnail} onChange={(e) => setCreateForm({ ...createForm, thumbnail: e.target.value })} placeholder="https://example.com/image.jpg" />
+                  </div>
+                </div>
+                <div className="create-form__field">
+                  <label>Description *</label>
+                  <textarea rows="3" value={createForm.description} onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })} placeholder="Course description" />
+                </div>
+                <div className="create-form__row">
+                  <div className="create-form__field">
+                    <label>Duration (seconds)</label>
+                    <input type="number" value={createForm.duration} onChange={(e) => setCreateForm({ ...createForm, duration: e.target.value })} placeholder="e.g. 3600" />
+                  </div>
+                  <div className="create-form__field">
+                    <label>Price</label>
+                    <input type="number" value={createForm.price} onChange={(e) => setCreateForm({ ...createForm, price: e.target.value })} placeholder="e.g. 500" />
+                  </div>
+                </div>
+                <div className="create-form__row">
+                  <div className="create-form__field">
+                    <label>Level</label>
+                    <select value={createForm.level} onChange={(e) => setCreateForm({ ...createForm, level: e.target.value })}>
+                      <option value="BEGINNER">Beginner</option>
+                      <option value="INTERMEDIATE">Intermediate</option>
+                      <option value="ADVANCED">Advanced</option>
+                    </select>
+                  </div>
+                  <div className="create-form__field">
+                    <label>Language</label>
+                    <input type="text" value={createForm.language} onChange={(e) => setCreateForm({ ...createForm, language: e.target.value })} placeholder="e.g. English" />
+                  </div>
+                  <div className="create-form__field">
+                    <label>Status</label>
+                    <select value={createForm.status} onChange={(e) => setCreateForm({ ...createForm, status: e.target.value })}>
+                      <option value="DRAFT">Draft</option>
+                      <option value="PUBLISHED">Published</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="create-form__actions">
+                  <button type="button" className="create-form__cancel" onClick={() => setShowCreateModal(false)} disabled={createLoading}>Cancel</button>
+                  <button type="submit" className="create-form__submit" disabled={createLoading}>
+                    {createLoading ? <span className="login__spinner" /> : (editingCourseId ? 'Save Changes' : 'Create Course')}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* ===== Delete Confirm Modal ===== */}
+        {deleteTarget && (
+          <div className="modal-overlay" onClick={() => !loading && setDeleteTarget(null)}>
+            <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
+              <div className="delete-confirm">
+                <div className="delete-confirm__icon"><HiOutlineExclamationTriangle /></div>
+                <h3>Delete Course</h3>
+                <p>Are you sure you want to delete <strong>{deleteTarget.title}</strong>? This will permanently remove all associated modules and lessons.</p>
+                <div className="delete-confirm__actions">
+                  <button className="delete-confirm__btn delete-confirm__btn--cancel" onClick={() => setDeleteTarget(null)}>Cancel</button>
+                  <button className="delete-confirm__btn delete-confirm__btn--delete" onClick={executeDeleteCourse} disabled={loading}>
+                    {loading ? <span className="login__spinner" /> : 'Delete Course'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -233,7 +378,7 @@ const Products = () => {
         </div>
         <button
           className="products-page__add-btn"
-          onClick={() => setShowCreateModal(true)}
+          onClick={openCreateModal}
           id="add-course-btn"
         >
           <HiOutlinePlus /> Add Course
@@ -368,9 +513,9 @@ const Products = () => {
               <HiOutlineXMark />
             </button>
 
-            <h2 className="modal__title">Create New Course</h2>
+            <h2 className="modal__title">{editingCourseId ? 'Edit Course' : 'Create New Course'}</h2>
 
-            <form className="create-form" onSubmit={handleCreate}>
+            <form className="create-form" onSubmit={handleSubmit}>
               <div className="create-form__row">
                 <div className="create-form__field">
                   <label>Title *</label>
@@ -480,10 +625,29 @@ const Products = () => {
                   disabled={createLoading}
                   id="create-course-submit"
                 >
-                  {createLoading ? <span className="login__spinner" /> : 'Create Course'}
+                  {createLoading ? <span className="login__spinner" /> : (editingCourseId ? 'Save Changes' : 'Create Course')}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ===== Delete Confirm Modal ===== */}
+      {deleteTarget && (
+        <div className="modal-overlay" onClick={() => !loading && setDeleteTarget(null)}>
+          <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
+            <div className="delete-confirm">
+              <div className="delete-confirm__icon"><HiOutlineExclamationTriangle /></div>
+              <h3>Delete Course</h3>
+              <p>Are you sure you want to delete <strong>{deleteTarget.title}</strong>? This will permanently remove all associated modules and lessons.</p>
+              <div className="delete-confirm__actions">
+                <button className="delete-confirm__btn delete-confirm__btn--cancel" onClick={() => setDeleteTarget(null)}>Cancel</button>
+                <button className="delete-confirm__btn delete-confirm__btn--delete" onClick={executeDeleteCourse} disabled={loading}>
+                  {loading ? <span className="login__spinner" /> : 'Delete Course'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
