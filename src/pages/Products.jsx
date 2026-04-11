@@ -34,8 +34,8 @@ const getFullUrl = (path) => {
   if (normalizedPath.startsWith("blob:") || normalizedPath.startsWith("http"))
     return normalizedPath;
   return normalizedPath.startsWith("/")
-    ? `https://api.rumon.top/${normalizedPath}`
-    : `https://api.rumon.top/${normalizedPath}`;
+    ? `https://www.idealessons.com${normalizedPath}`
+    : `https://www.idealessons.com${normalizedPath}`;
 };
 
 // ========== Helper functions ==========
