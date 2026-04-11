@@ -35,8 +35,8 @@ const getFullUrl = (path) => {
   const normalizedPath = path.replace(/\\/g, '/');
   if (normalizedPath.startsWith('blob:') || normalizedPath.startsWith('http')) return normalizedPath;
   return normalizedPath.startsWith('/')
-    ? `https://www.idealessons.com${normalizedPath}`
-    : `https://www.idealessons.com${normalizedPath}`;
+    ? `https://api.idealessons.com${normalizedPath}`
+    : `https://api.idealessons.com${normalizedPath}`;
 };
 
 // Helper to get cover URL from blog object
