@@ -22,6 +22,26 @@ const formatDuration = (seconds) => {
   return `${m}m`;
 };
 
+const formatBytes = (bytes) => {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let value = bytes;
+  let unitIndex = 0;
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024;
+    unitIndex += 1;
+  }
+  return `${value.toFixed(value >= 100 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
+};
+
+const formatEta = (seconds) => {
+  if (!Number.isFinite(seconds) || seconds <= 0) return 'a few seconds';
+  if (seconds < 60) return `${Math.ceil(seconds)}s left`;
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.ceil(seconds % 60);
+  return secs === 60 ? `${mins + 1}m left` : `${mins}m ${secs}s left`;
+};
+
 const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
   const [loading, setLoading] = useState(false);
   const [expandedModules, setExpandedModules] = useState({});
@@ -36,6 +56,13 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [lessonForm, setLessonForm] = useState({ title: '' });
   const [lessonVideoFile, setLessonVideoFile] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState({
+    percent: 0,
+    loaded: 0,
+    total: 0,
+    speedBps: 0,
+    secondsLeft: null
+  });
   const videoRef = useRef(null);
 
   // Delete Confirm Modal
@@ -105,6 +132,7 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
     setActiveModule(moduleId);
     setLessonForm({ title: '' });
     setLessonVideoFile(null);
+    setUploadProgress({ percent: 0, loaded: 0, total: 0, speedBps: 0, secondsLeft: null });
     setShowLessonModal(true);
   };
 
@@ -128,20 +156,35 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
     fd.append('title', lessonForm.title);
     fd.append('video', lessonVideoFile);
 
-    console.log('--- Uploading Lesson ---');
-    console.log('API Endpoint:', `/courses/module/${activeModule}/lesson`);
-    console.log('Form Data Entries:');
-    for (let pair of fd.entries()) {
-      console.log(`${pair[0]}:`, pair[1] instanceof File ? `File [${pair[1].name}, ${pair[1].size} bytes]` : pair[1]);
-    }
-
     setLoading(true);
+    setUploadProgress({
+      percent: 0,
+      loaded: 0,
+      total: lessonVideoFile.size || 0,
+      speedBps: 0,
+      secondsLeft: null
+    });
+
     try {
       // POST /courses/module/:moduleId/lesson
       const res = await API.post(`/courses/module/${activeModule}/lesson`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          const loaded = progressEvent.loaded || 0;
+          const total = progressEvent.total || lessonVideoFile.size || 0;
+          const percent = total > 0 ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+
+          // Axios v1 may provide rate/estimated directly. If unavailable, we still show percent + bytes.
+          const speedBps = progressEvent.rate || 0;
+          const secondsLeft = Number.isFinite(progressEvent.estimated)
+            ? progressEvent.estimated
+            : (speedBps > 0 && total > loaded ? (total - loaded) / speedBps : null);
+
+          setUploadProgress({ percent, loaded, total, speedBps, secondsLeft });
+        }
       });
       if (res.data.success || res.status === 200 || res.status === 201) {
+        setUploadProgress((prev) => ({ ...prev, percent: 100, loaded: prev.total || prev.loaded }));
         showNotification('Lesson added successfully');
         setShowLessonModal(false);
         // Force expand the module that got a new lesson
@@ -152,6 +195,7 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
       showNotification(err.response?.data?.message || 'Failed to add lesson', 'error');
     } finally {
       setLoading(false);
+      setUploadProgress({ percent: 0, loaded: 0, total: 0, speedBps: 0, secondsLeft: null });
     }
   };
 
@@ -366,6 +410,33 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
                   onChange={handleVideoSelect}
                 />
               </div>
+
+              {loading && lessonVideoFile && (
+                <div className="lesson-upload-progress" role="status" aria-live="polite">
+                  <div className="lesson-upload-progress__header">
+                    <span>Uploading video...</span>
+                    <strong>{uploadProgress.percent}%</strong>
+                  </div>
+                  <div className="lesson-upload-progress__track" aria-hidden="true">
+                    <div
+                      className="lesson-upload-progress__bar"
+                      style={{ width: `${uploadProgress.percent}%` }}
+                    />
+                  </div>
+                  <div className="lesson-upload-progress__meta">
+                    <span>
+                      {formatBytes(uploadProgress.loaded)} / {formatBytes(uploadProgress.total || lessonVideoFile.size || 0)}
+                    </span>
+                    <span>
+                      {uploadProgress.speedBps > 0 ? `${formatBytes(uploadProgress.speedBps)}/s` : 'Calculating speed...'}
+                    </span>
+                    <span>
+                      {uploadProgress.percent >= 100 ? 'Finalizing...' : formatEta(uploadProgress.secondsLeft)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="create-form__actions">
                 <button type="button" className="create-form__cancel" onClick={() => setShowLessonModal(false)} disabled={loading}>
                   Cancel
