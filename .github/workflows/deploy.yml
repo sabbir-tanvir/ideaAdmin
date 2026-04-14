@@ -41,5 +41,5 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USER }}
           password: ${{ secrets.PASS }}
-          source: "build/*"
+          source: "dist/*"
           target: "public_html/admin/"
