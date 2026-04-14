@@ -43,3 +43,4 @@ jobs:
           password: ${{ secrets.PASS }}
           source: "dist/*"
           target: "public_html/admin/"
+          strip_components: 1 
