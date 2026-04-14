@@ -1,0 +1,45 @@
+name: Deploy React to cPanel
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # - name: Setup Node
+      #   uses: actions/setup-node@v3
+      #   with:
+      #     node-version: 18
+
+      # - name: Install dependencies
+      #   run: npm install
+
+      # - name: Build React app
+      #   run: npm run build
+
+      # Step 1: Clean server folder
+      - name: Clean admin folder (keep .htaccess)
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          script: |
+            cd public_html/admin || exit 1
+            find . -mindepth 1 ! -name '.htaccess' -exec rm -rf {} +
+
+      # Step 2: Upload build files
+      - name: Upload build via SCP
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          password: ${{ secrets.PASS }}
+          source: "build/*"
+          target: "public_html/admin/"
