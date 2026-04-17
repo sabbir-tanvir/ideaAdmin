@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import API from "../api/axios";
 import CourseCurriculum from "../components/Products/CourseCurriculum";
+import EnrolledUsers from "../components/Products/EnrolledUsers";
 import {
   HiOutlineMagnifyingGlass,
   HiOutlinePlus,
@@ -23,6 +24,7 @@ import {
   HiOutlinePencilSquare,
   HiOutlineCloudArrowUp,
   HiOutlinePhoto,
+  HiOutlineUsers,
 } from "react-icons/hi2";
 
 import "../styles/products.css";
@@ -84,6 +86,7 @@ const Products = () => {
   // Detail view
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [activeDetailTab, setActiveDetailTab] = useState("curriculum"); // 'curriculum' or 'students'
 
   // Create/Edit form
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -292,7 +295,10 @@ const Products = () => {
         >
           <button
             className="course-detail__back"
-            onClick={() => setSelectedCourse(null)}
+            onClick={() => {
+              setSelectedCourse(null);
+              setActiveDetailTab("curriculum");
+            }}
             style={{ marginBottom: 0 }}
           >
             <HiOutlineArrowLeft /> Back to Courses
@@ -381,12 +387,42 @@ const Products = () => {
           </div>
         </div>
 
-        {/* Modules & Lessons */}
-        <CourseCurriculum
-          course={course}
-          onUpdate={fetchCourses}
-          showNotification={showNotification}
-        />
+        {/* Detail Tabs */}
+        <div className="course-detail__tabs">
+          <button
+            className={`course-detail__tab ${
+              activeDetailTab === "curriculum"
+                ? "course-detail__tab--active"
+                : ""
+            }`}
+            onClick={() => setActiveDetailTab("curriculum")}
+          >
+            <HiOutlineAcademicCap style={{ marginRight: "6px" }} />
+            Curriculum
+          </button>
+          <button
+            className={`course-detail__tab ${
+              activeDetailTab === "students"
+                ? "course-detail__tab--active"
+                : ""
+            }`}
+            onClick={() => setActiveDetailTab("students")}
+          >
+            <HiOutlineUsers style={{ marginRight: "6px" }} />
+            Enrolled Students
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {activeDetailTab === "curriculum" ? (
+          <CourseCurriculum
+            course={course}
+            onUpdate={fetchCourses}
+            showNotification={showNotification}
+          />
+        ) : (
+          <EnrolledUsers course={course} showNotification={showNotification} />
+        )}
 
         {/* ===== Create/Edit Modal (shared) ===== */}
         {showCreateModal && (
