@@ -5,23 +5,26 @@ on:
     branches: [main]
 
 jobs:
-  build-deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # - name: Setup Node
-      #   uses: actions/setup-node@v3
-      #   with:
-      #     node-version: 18
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.13.1"
 
-      # - name: Install dependencies
-      #   run: npm install
+      - name: Install dependencies
+        run: npm ci
 
-      # - name: Build React app
-      #   run: npm run build
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build React app
+        run: npm run build
 
       # Step 1: Clean server folder
       - name: Clean admin folder (keep .htaccess)
@@ -43,4 +46,4 @@ jobs:
           password: ${{ secrets.PASS }}
           source: "dist/*"
           target: "public_html/admin/"
-          strip_components: 1 
+          strip_components: 1
