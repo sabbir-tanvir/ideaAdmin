@@ -30,41 +30,41 @@ const Dashboard = () => {
         const usersList = usersRes.data.success ? usersRes.data.data : (Array.isArray(usersRes.data) ? usersRes.data : []);
         const productsList = coursesRes.data.success ? coursesRes.data.data : (Array.isArray(coursesRes.data) ? coursesRes.data : []);
         const paymentsList = paymentsRes.data.success ? paymentsRes.data.data : (Array.isArray(paymentsRes.data) ? paymentsRes.data : []);
-        
+
         // Calculate Revenue from SUCCESS payments
         const totalRevenue = paymentsList
           .filter(p => p.status === 'SUCCESS' || p.status === 'APPROVED')
           .reduce((sum, p) => sum + Number(p.amount || 0), 0);
-          
+
         setStats({
           users: usersList.length,
           products: productsList.length,
           payments: paymentsList.length,
           revenue: `৳${totalRevenue.toLocaleString()}`,
         });
-        
+
         // Generate Recent Activities
         const combinedActivities = [
-          ...usersList.map(u => ({ 
-            id: `u-${u.id}`, 
-            type: 'USER', 
-            date: u.createdAt, 
+          ...usersList.map(u => ({
+            id: `u-${u.id}`,
+            type: 'USER',
+            date: u.createdAt,
             title: 'New User Registered',
-            desc: `${u.name} just joined the platform.` 
+            desc: `${u.name} just joined the platform.`
           })),
-          ...paymentsList.map(p => ({ 
-            id: `p-${p.id}`, 
-            type: 'PAYMENT', 
-            date: p.createdAt, 
+          ...paymentsList.map(p => ({
+            id: `p-${p.id}`,
+            type: 'PAYMENT',
+            date: p.createdAt,
             title: 'Payment Received',
-            desc: `${p.user?.name || 'A user'} paid ৳${p.amount} via ${p.paymentMethod}.` 
+            desc: `${p.user?.name || 'A user'} paid ৳${p.amount} via ${p.paymentMethod}.`
           }))
         ];
-        
+
         // Sort by date newest first, and take top 5
         combinedActivities.sort((a, b) => new Date(b.date) - new Date(a.date));
         setRecentActivities(combinedActivities.slice(0, 5));
-        
+
       } catch (err) {
         console.error('Failed to fetch dashboard stats', err);
       }
@@ -83,7 +83,7 @@ const Dashboard = () => {
       path: '/dashboard/users',
     },
     {
-      label: 'Products',
+      label: 'Courses',
       value: stats.products,
       icon: HiOutlineShoppingBag,
       color: '#10b981',

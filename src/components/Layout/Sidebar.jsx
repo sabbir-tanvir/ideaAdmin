@@ -19,7 +19,7 @@ import {
 const navItems = [
   { label: 'Dashboard', icon: HiOutlineHome, path: '/dashboard' },
   { label: 'Users', icon: HiOutlineUsers, path: '/dashboard/users' },
-  { label: 'Products', icon: HiOutlineShoppingBag, path: '/dashboard/products' },
+  { label: 'Courses', icon: HiOutlineShoppingBag, path: '/dashboard/products' },
   { label: 'Payments', icon: HiOutlineDocumentText, path: '/dashboard/payments' },
   { label: 'Blogs', icon: HiOutlineNewspaper, path: '/dashboard/blogs' },
   { label: 'Events', icon: HiOutlineCalendar, path: '/dashboard/events' },
