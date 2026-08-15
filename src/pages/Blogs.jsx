@@ -59,7 +59,6 @@ const Blogs = () => {
 
   // Detail view
   const [selectedBlog, setSelectedBlog] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
 
   // Create / Edit modal
   const [showFormModal, setShowFormModal] = useState(false);
@@ -81,6 +80,10 @@ const Blogs = () => {
   const [removedGalleryIds, setRemovedGalleryIds] = useState([]); // IDs to remove on edit
   const mainPhotoRef = useRef(null);
   const galleryRef = useRef(null);
+
+  // Activities states
+  const [activities, setActivities] = useState([]);
+  const [removeActivityIds, setRemoveActivityIds] = useState([]);
 
   // Delete modal
   const [deleteTarget, setDeleteTarget] = useState(null);
@@ -121,6 +124,76 @@ const Blogs = () => {
     }));
   };
 
+  // ---- Activities Helpers ----
+  const handleAddActivity = () => {
+    setActivities(prev => [
+      ...prev,
+      {
+        id: null,
+        title: '',
+        description: '',
+        sortOrder: prev.length,
+        existingImages: [],
+        newImageFiles: [],
+        removeImageIds: []
+      }
+    ]);
+  };
+
+  const handleRemoveActivity = (index) => {
+    setActivities(prev => {
+      const updated = [...prev];
+      const removedItem = updated[index];
+
+      if (removedItem.id) {
+        setRemoveActivityIds(r => [...r, removedItem.id]);
+      }
+
+      updated.splice(index, 1);
+      return updated.map((act, i) => ({ ...act, sortOrder: i }));
+    });
+  };
+
+  const handleActivityChange = (index, field, value) => {
+    setActivities(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index] };
+      updated[index][field] = value;
+      return updated;
+    });
+  };
+
+  const handleActivityFilesChange = (index, event) => {
+    const files = Array.from(event.target.files || []);
+    if (!files.length) return;
+    setActivities(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index] };
+      updated[index].newImageFiles = [...(updated[index].newImageFiles || []), ...files];
+      return updated;
+    });
+    event.target.value = '';
+  };
+
+  const removeActivityNewImage = (activityIndex, fileIndex) => {
+    setActivities(prev => {
+      const updated = [...prev];
+      updated[activityIndex] = { ...updated[activityIndex] };
+      updated[activityIndex].newImageFiles = updated[activityIndex].newImageFiles.filter((_, i) => i !== fileIndex);
+      return updated;
+    });
+  };
+
+  const removeActivityExistingImage = (activityIndex, imageId) => {
+    setActivities(prev => {
+      const updated = [...prev];
+      updated[activityIndex] = { ...updated[activityIndex] };
+      updated[activityIndex].existingImages = updated[activityIndex].existingImages.filter(img => img.id !== imageId);
+      updated[activityIndex].removeImageIds = [...(updated[activityIndex].removeImageIds || []), imageId];
+      return updated;
+    });
+  };
+
   // ---- Create ----
   const openCreateModal = () => {
     setFormMode('create');
@@ -131,6 +204,8 @@ const Blogs = () => {
     setGalleryPreviews([]);
     setExistingGallery([]);
     setRemovedGalleryIds([]);
+    setActivities([]);
+    setRemoveActivityIds([]);
     setShowFormModal(true);
   };
 
@@ -182,6 +257,36 @@ const Blogs = () => {
     if (removedGalleryIds.length > 0) {
       fd.append('removeGalleryIds', removedGalleryIds.join(','));
     }
+
+    // 2. Activities JSON Metadata
+    const activitiesMeta = activities.map((act, index) => ({
+      ...(act.id ? { id: act.id } : {}),
+      title: act.title,
+      description: act.description,
+      sortOrder: index,
+      activityIndex: index,
+      existingImages: (act.existingImages || []).map((img, imgIdx) => ({
+        id: img.id,
+        sortOrder: imgIdx
+      })),
+      removeImageIds: act.removeImageIds || []
+    }));
+
+    fd.append('activities', JSON.stringify(activitiesMeta));
+
+    if (removeActivityIds.length > 0) {
+      fd.append('removeActivityIds', JSON.stringify(removeActivityIds));
+    }
+
+    // 4. Attach New Image Files per Activity Index
+    activities.forEach((act, index) => {
+      if (act.newImageFiles?.length) {
+        act.newImageFiles.forEach(file => {
+          fd.append(`activity_${index}_images`, file);
+        });
+      }
+    });
+
     return fd;
   };
 
@@ -229,6 +334,23 @@ const Blogs = () => {
     setExistingGallery(
       (blog.gallery || []).filter((g) => typeof g === 'object' && g.id).map((g) => ({ id: g.id, url: g.url }))
     );
+    // Activities
+    setActivities(
+      (blog.activities || []).map((act, index) => ({
+        id: act.id,
+        title: act.title || '',
+        description: act.description || '',
+        sortOrder: act.sortOrder ?? index,
+        existingImages: (act.images || []).map(img => ({
+          id: img.id,
+          url: img.media?.url || img.url,
+          sortOrder: img.sortOrder
+        })),
+        newImageFiles: [],
+        removeImageIds: []
+      }))
+    );
+    setRemoveActivityIds([]);
     setShowFormModal(true);
   };
 
@@ -288,13 +410,10 @@ const Blogs = () => {
   // ---- View detail ----
   const viewBlogDetail = async (blog) => {
     try {
-      setDetailLoading(true);
       const res = await API.get(`/blogs/id/${blog.id}`);
       setSelectedBlog(res.data.data || res.data);
     } catch {
       setSelectedBlog(blog);
-    } finally {
-      setDetailLoading(false);
     }
   };
 
@@ -378,6 +497,34 @@ const Blogs = () => {
                 <div className="blog-detail__tags">
                   {blog.tags.map((tag, i) => (
                     <span key={i} className="blog-tag">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Render Activities */}
+            {blog.activities && blog.activities.length > 0 && (
+              <div className="blog-detail__section">
+                <h3>Activities</h3>
+                <div className="blog-detail__activities">
+                  {blog.activities.map((activity) => (
+                    <div key={activity.id} className="blog-detail__activity-card" style={{ marginBottom: '24px', padding: '16px', border: '1px solid #eaeaea', borderRadius: '8px' }}>
+                      <h4 style={{ margin: '0 0 8px 0', color: '#333' }}>{activity.title}</h4>
+                      <p style={{ margin: '0 0 16px 0', color: '#666', fontSize: '14px', lineHeight: '1.5' }}>{activity.description}</p>
+
+                      {activity.images && activity.images.length > 0 && (
+                        <div className="blog-detail__gallery" style={{ marginTop: '12px' }}>
+                          {activity.images.map((imgItem) => (
+                            <img
+                              key={imgItem.id}
+                              src={getFullUrl(imgItem.media?.url || imgItem.url)}
+                              alt={imgItem.media?.alt || activity.title}
+                              className="blog-detail__gallery-img"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -675,6 +822,84 @@ const Blogs = () => {
                   onChange={handleMainPhotoSelect}
                   id="blog-photo-input"
                 />
+              </div>
+
+              {/* Activities Upload */}
+              <div className="create-form__field">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <label style={{ margin: 0 }}>Activities</label>
+                  <button type="button" className="blogs-page__add-btn" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={handleAddActivity}>
+                    <HiOutlinePlus /> Add Activity
+                  </button>
+                </div>
+
+                {activities.map((act, actIdx) => (
+                  <div key={actIdx} style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginBottom: '15px', position: 'relative' }}>
+                    <button
+                      type="button"
+                      style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer' }}
+                      onClick={() => handleRemoveActivity(actIdx)}
+                    >
+                      <HiOutlineTrash size={18} />
+                    </button>
+
+                    <div className="create-form__field" style={{ marginBottom: '10px' }}>
+                      <label>Activity Title</label>
+                      <input
+                        type="text"
+                        value={act.title}
+                        onChange={(e) => handleActivityChange(actIdx, 'title', e.target.value)}
+                        placeholder="Activity title..."
+                      />
+                    </div>
+
+                    <div className="create-form__field" style={{ marginBottom: '10px' }}>
+                      <label>Activity Description</label>
+                      <textarea
+                        value={act.description}
+                        onChange={(e) => handleActivityChange(actIdx, 'description', e.target.value)}
+                        placeholder="Activity description..."
+                        rows={3}
+                      />
+                    </div>
+
+                    <div className="create-form__field" style={{ marginBottom: '0' }}>
+                      <label>Activity Images</label>
+                      {(act.existingImages?.length > 0 || act.newImageFiles?.length > 0) && (
+                        <div className="upload-gallery-grid" style={{ marginBottom: '10px' }}>
+                          {act.existingImages?.map((img) => (
+                            <div key={`exist-act-${img.id}`} className="upload-gallery-item">
+                              <img src={getFullUrl(img.url)} alt="Activity" className="upload-gallery-item__img" />
+                              <button type="button" className="upload-gallery-item__remove" onClick={() => removeActivityExistingImage(actIdx, img.id)}>
+                                <HiOutlineXMark />
+                              </button>
+                            </div>
+                          ))}
+                          {act.newImageFiles?.map((file, fileIdx) => (
+                            <div key={`new-act-${fileIdx}`} className="upload-gallery-item">
+                              <img src={URL.createObjectURL(file)} alt={`New Activity ${fileIdx + 1}`} className="upload-gallery-item__img" />
+                              <button type="button" className="upload-gallery-item__remove" onClick={() => removeActivityNewImage(actIdx, fileIdx)}>
+                                <HiOutlineXMark />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      <div className="upload-zone upload-zone--sm" onClick={() => document.getElementById(`activity-file-${actIdx}`)?.click()}>
+                        <HiOutlinePlus className="upload-zone__icon" />
+                        <p className="upload-zone__text">Add activity images</p>
+                      </div>
+                      <input
+                        id={`activity-file-${actIdx}`}
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleActivityFilesChange(actIdx, e)}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
 
               {/* Gallery Upload */}
