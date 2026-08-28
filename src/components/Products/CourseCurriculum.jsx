@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import * as tus from 'tus-js-client';
 import API from '../../api/axios';
 import {
   HiOutlineAcademicCap,
@@ -42,6 +43,20 @@ const formatEta = (seconds) => {
   return secs === 60 ? `${mins + 1}m left` : `${mins}m ${secs}s left`;
 };
 
+// Helper to extract duration in seconds from video file before upload
+const getVideoDuration = (file) => {
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      window.URL.revokeObjectURL(video.src);
+      resolve(Math.round(video.duration));
+    };
+    video.onerror = () => resolve(0);
+    video.src = URL.createObjectURL(file);
+  });
+};
+
 const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
   const [loading, setLoading] = useState(false);
   const [expandedModules, setExpandedModules] = useState({});
@@ -54,19 +69,26 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
 
   // Lesson Modal
   const [showLessonModal, setShowLessonModal] = useState(false);
-  const [lessonForm, setLessonForm] = useState({ title: '' });
+  const [lessonForm, setLessonForm] = useState({ title: '', isPreview: false });
   const [lessonVideoFile, setLessonVideoFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState({
     percent: 0,
     loaded: 0,
     total: 0,
     speedBps: 0,
-    secondsLeft: null
+    secondsLeft: null,
+    statusMessage: ''
   });
   const videoRef = useRef(null);
+  const tusUploadRef = useRef(null);
 
   // Delete Confirm Modal
   const [deleteTarget, setDeleteTarget] = useState(null); // { type: 'module'|'lesson', id, title }
+
+  // Edit Lesson Modal
+  const [showEditLessonModal, setShowEditLessonModal] = useState(false);
+  const [activeLesson, setActiveLesson] = useState(null);
+  const [editLessonForm, setEditLessonForm] = useState({ title: '', sortOrder: '', isPreview: false });
 
   // Quizzes Modal
   const [selectedLessonForQuizzes, setSelectedLessonForQuizzes] = useState(null);
@@ -130,15 +152,79 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
   const openAddLesson = (e, moduleId) => {
     e.stopPropagation();
     setActiveModule(moduleId);
-    setLessonForm({ title: '' });
+    setLessonForm({ title: '', isPreview: false });
     setLessonVideoFile(null);
-    setUploadProgress({ percent: 0, loaded: 0, total: 0, speedBps: 0, secondsLeft: null });
+    setUploadProgress({
+      percent: 0,
+      loaded: 0,
+      total: 0,
+      speedBps: 0,
+      secondsLeft: null,
+      statusMessage: ''
+    });
     setShowLessonModal(true);
+  };
+
+  const openEditLesson = (e, lesson) => {
+    e.stopPropagation();
+    setActiveLesson(lesson);
+    setEditLessonForm({
+      title: lesson.title || '',
+      sortOrder: lesson.sortOrder ?? '',
+      isPreview: Boolean(lesson.isPreview)
+    });
+    setShowEditLessonModal(true);
+  };
+
+  const submitEditLesson = async (e) => {
+    e.preventDefault();
+    if (!editLessonForm.title.trim()) {
+      showNotification('Lesson title is required', 'error');
+      return;
+    }
+    setLoading(true);
+    try {
+      const payload = {
+        title: editLessonForm.title.trim(),
+        isPreview: Boolean(editLessonForm.isPreview)
+      };
+      if (editLessonForm.sortOrder !== '') {
+        payload.sortOrder = Number(editLessonForm.sortOrder);
+      }
+
+      const res = await API.put(`/courses/lesson/${activeLesson.id}`, payload);
+      if (res.data?.success || res.status === 200) {
+        showNotification('Lesson updated successfully');
+        setShowEditLessonModal(false);
+        if (onUpdate) onUpdate();
+      }
+    } catch (err) {
+      showNotification(err.response?.data?.message || 'Failed to update lesson', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleVideoSelect = (e) => {
     const file = e.target.files?.[0];
     if (file) setLessonVideoFile(file);
+  };
+
+  const handleCancelUpload = () => {
+    if (tusUploadRef.current) {
+      tusUploadRef.current.abort();
+      tusUploadRef.current = null;
+    }
+    setLoading(false);
+    setUploadProgress({
+      percent: 0,
+      loaded: 0,
+      total: 0,
+      speedBps: 0,
+      secondsLeft: null,
+      statusMessage: ''
+    });
+    setShowLessonModal(false);
   };
 
   const submitLesson = async (e) => {
@@ -151,10 +237,6 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
       showNotification('Video file is required', 'error');
       return;
     }
-    
-    const fd = new FormData();
-    fd.append('title', lessonForm.title);
-    fd.append('video', lessonVideoFile);
 
     setLoading(true);
     setUploadProgress({
@@ -162,40 +244,135 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
       loaded: 0,
       total: lessonVideoFile.size || 0,
       speedBps: 0,
-      secondsLeft: null
+      secondsLeft: null,
+      statusMessage: 'Extracting video metadata...'
     });
 
     try {
-      // POST /courses/module/:moduleId/lesson
-      const res = await API.post(`/courses/module/${activeModule}/lesson`, fd, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (progressEvent) => {
-          const loaded = progressEvent.loaded || 0;
-          const total = progressEvent.total || lessonVideoFile.size || 0;
-          const percent = total > 0 ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+      // 1. Extract duration in browser
+      const duration = await getVideoDuration(lessonVideoFile);
 
-          // Axios v1 may provide rate/estimated directly. If unavailable, we still show percent + bytes.
-          const speedBps = progressEvent.rate || 0;
-          const secondsLeft = Number.isFinite(progressEvent.estimated)
-            ? progressEvent.estimated
-            : (speedBps > 0 && total > loaded ? (total - loaded) / speedBps : null);
+      setUploadProgress((prev) => ({
+        ...prev,
+        statusMessage: 'Requesting upload signature...'
+      }));
 
-          setUploadProgress({ percent, loaded, total, speedBps, secondsLeft });
+      // 2. Request upload signature from Backend
+      const sigRes = await API.post('/courses/bunny/signature', {
+        title: lessonForm.title
+      });
+      const sigData = sigRes.data?.data || sigRes.data;
+      const { videoId, libraryId, expirationTime, signature, videoUrl } = sigData || {};
+
+      if (!videoId || !libraryId || !signature) {
+        throw new Error('Failed to obtain upload signature from server');
+      }
+
+      setUploadProgress((prev) => ({
+        ...prev,
+        statusMessage: 'Uploading video to Bunny CDN...'
+      }));
+
+      let lastLoaded = 0;
+      let lastTime = Date.now();
+
+      // 3. Initiate TUS direct upload to Bunny Stream
+      const upload = new tus.Upload(lessonVideoFile, {
+        endpoint: 'https://video.bunnycdn.com/tusupload',
+        retryDelays: [0, 3000, 5000, 10000, 20000],
+        headers: {
+          AuthorizationSignature: signature,
+          AuthorizationExpire: expirationTime,
+          VideoId: videoId,
+          LibraryId: libraryId
+        },
+        metadata: {
+          filetype: lessonVideoFile.type || 'video/mp4',
+          title: lessonForm.title
+        },
+        onError: (error) => {
+          console.error('Bunny Upload Error:', error);
+          showNotification(error?.message || 'Video upload failed. Please try again.', 'error');
+          setLoading(false);
+          tusUploadRef.current = null;
+        },
+        onProgress: (bytesSent, bytesTotal) => {
+          const currentTime = Date.now();
+          const timeDiff = (currentTime - lastTime) / 1000;
+          const bytesDiff = bytesSent - lastLoaded;
+
+          let currentSpeed = 0;
+          if (timeDiff > 0.3) {
+            currentSpeed = bytesDiff / timeDiff;
+            lastLoaded = bytesSent;
+            lastTime = currentTime;
+          }
+
+          const percent = bytesTotal > 0 ? Math.min(100, Math.round((bytesSent / bytesTotal) * 100)) : 0;
+          const secondsLeft = currentSpeed > 0 && bytesTotal > bytesSent ? (bytesTotal - bytesSent) / currentSpeed : null;
+
+          setUploadProgress((prev) => ({
+            ...prev,
+            percent,
+            loaded: bytesSent,
+            total: bytesTotal,
+            speedBps: currentSpeed || prev.speedBps,
+            secondsLeft: secondsLeft !== null ? secondsLeft : prev.secondsLeft,
+            statusMessage: percent >= 100 ? 'Finalizing Bunny upload...' : 'Uploading video to Bunny CDN...'
+          }));
+        },
+        onSuccess: async () => {
+          setUploadProgress((prev) => ({
+            ...prev,
+            percent: 100,
+            loaded: prev.total,
+            statusMessage: 'Saving lesson details...'
+          }));
+
+          try {
+            // 4. Save Lesson Record to Backend DB as JSON
+            const saveRes = await API.post(`/courses/module/${activeModule}/lesson`, {
+              title: lessonForm.title,
+              video_id: videoId,
+              library_id: libraryId,
+              videoUrl: videoUrl || `https://iframe.mediadelivery.net/play/${libraryId}/${videoId}`,
+              duration: duration || 0,
+              isPreview: Boolean(lessonForm.isPreview)
+            });
+
+            if (saveRes.data?.success || saveRes.status === 200 || saveRes.status === 201) {
+              showNotification('Lesson added successfully');
+              setShowLessonModal(false);
+              setExpandedModules((prev) => ({ ...prev, [activeModule]: true }));
+              if (onUpdate) onUpdate();
+            } else {
+              showNotification(saveRes.data?.message || 'Failed to save lesson record', 'error');
+            }
+          } catch (saveErr) {
+            console.error('Save lesson error:', saveErr);
+            showNotification(saveErr.response?.data?.message || saveErr.message || 'Failed to save lesson record', 'error');
+          } finally {
+            setLoading(false);
+            tusUploadRef.current = null;
+            setUploadProgress({
+              percent: 0,
+              loaded: 0,
+              total: 0,
+              speedBps: 0,
+              secondsLeft: null,
+              statusMessage: ''
+            });
+          }
         }
       });
-      if (res.data.success || res.status === 200 || res.status === 201) {
-        setUploadProgress((prev) => ({ ...prev, percent: 100, loaded: prev.total || prev.loaded }));
-        showNotification('Lesson added successfully');
-        setShowLessonModal(false);
-        // Force expand the module that got a new lesson
-        setExpandedModules((prev) => ({ ...prev, [activeModule]: true }));
-        if (onUpdate) onUpdate();
-      }
+
+      tusUploadRef.current = upload;
+      upload.start();
     } catch (err) {
-      showNotification(err.response?.data?.message || 'Failed to add lesson', 'error');
-    } finally {
+      console.error('Upload initiation error:', err);
+      showNotification(err.response?.data?.message || err.message || 'Something went wrong starting upload', 'error');
       setLoading(false);
-      setUploadProgress({ percent: 0, loaded: 0, total: 0, speedBps: 0, secondsLeft: null });
+      tusUploadRef.current = null;
     }
   };
 
@@ -301,10 +478,26 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
                             {lesson.isPreview && (
                               <span className="preview-badge">Preview</span>
                             )}
-                            <button className="curriculum-action-btn curriculum-action-btn--edit shrink-0" onClick={(e) => { e.stopPropagation(); setSelectedLessonForQuizzes(lesson); }} title="Manage Quizzes" style={{ color: 'var(--color-accent)' }}>
+                            <button
+                              className="curriculum-action-btn curriculum-action-btn--edit shrink-0"
+                              onClick={(e) => openEditLesson(e, lesson)}
+                              title="Edit Lesson"
+                            >
+                              <HiOutlinePencilSquare />
+                            </button>
+                            <button
+                              className="curriculum-action-btn curriculum-action-btn--edit shrink-0"
+                              onClick={(e) => { e.stopPropagation(); setSelectedLessonForQuizzes(lesson); }}
+                              title="Manage Quizzes"
+                              style={{ color: 'var(--color-accent)' }}
+                            >
                               <HiOutlineAcademicCap />
                             </button>
-                            <button className="curriculum-action-btn curriculum-action-btn--delete shrink-0" onClick={(e) => confirmDelete(e, 'lesson', lesson)} title="Delete Lesson">
+                            <button
+                              className="curriculum-action-btn curriculum-action-btn--delete shrink-0"
+                              onClick={(e) => confirmDelete(e, 'lesson', lesson)}
+                              title="Delete Lesson"
+                            >
                               <HiOutlineTrash />
                             </button>
                           </div>
@@ -366,7 +559,7 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
       {showLessonModal && (
         <div className="modal-overlay" onClick={() => !loading && setShowLessonModal(false)}>
           <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
-            <button className="modal__close" onClick={() => setShowLessonModal(false)}>
+            <button className="modal__close" onClick={loading ? handleCancelUpload : () => setShowLessonModal(false)}>
               <HiOutlineXMark />
             </button>
             <h2 className="modal__title">Add Lesson</h2>
@@ -376,9 +569,11 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
                 <input
                   type="text"
                   value={lessonForm.title}
+                  disabled={loading}
                   onChange={(e) => setLessonForm({ ...lessonForm, title: e.target.value })}
                   placeholder="e.g. Getting Started"
                   autoFocus
+                  required
                 />
               </div>
               <div className="create-form__field">
@@ -390,13 +585,19 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
                         <HiOutlineFilm style={{ marginRight: '6px', verticalAlign: 'middle' }}/>
                         {lessonVideoFile.name}
                       </span>
-                      <button type="button" className="upload-preview__remove" style={{ position: 'static' }} onClick={() => setLessonVideoFile(null)}>
+                      <button
+                        type="button"
+                        className="upload-preview__remove"
+                        style={{ position: 'static' }}
+                        disabled={loading}
+                        onClick={() => setLessonVideoFile(null)}
+                      >
                         <HiOutlineXMark />
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="upload-zone" onClick={() => videoRef.current?.click()}>
+                  <div className="upload-zone" onClick={() => !loading && videoRef.current?.click()}>
                     <HiOutlineCloudArrowUp className="upload-zone__icon" />
                     <p className="upload-zone__text">Click to set video</p>
                     <span className="upload-zone__hint">MP4, WebM formats</span>
@@ -406,15 +607,28 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
                   ref={videoRef}
                   type="file"
                   accept="video/*"
+                  disabled={loading}
                   style={{ display: 'none' }}
                   onChange={handleVideoSelect}
                 />
               </div>
 
-              {loading && lessonVideoFile && (
+              <div className="create-form__field">
+                <label className="checkbox-group" style={{ cursor: loading ? 'not-allowed' : 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={lessonForm.isPreview}
+                    disabled={loading}
+                    onChange={(e) => setLessonForm({ ...lessonForm, isPreview: e.target.checked })}
+                  />
+                  <span>Allow preview without enrollment</span>
+                </label>
+              </div>
+
+              {loading && (
                 <div className="lesson-upload-progress" role="status" aria-live="polite">
                   <div className="lesson-upload-progress__header">
-                    <span>Uploading video...</span>
+                    <span>{uploadProgress.statusMessage || 'Uploading video to Bunny CDN...'}</span>
                     <strong>{uploadProgress.percent}%</strong>
                   </div>
                   <div className="lesson-upload-progress__track" aria-hidden="true">
@@ -425,10 +639,10 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
                   </div>
                   <div className="lesson-upload-progress__meta">
                     <span>
-                      {formatBytes(uploadProgress.loaded)} / {formatBytes(uploadProgress.total || lessonVideoFile.size || 0)}
+                      {formatBytes(uploadProgress.loaded)} / {formatBytes(uploadProgress.total || lessonVideoFile?.size || 0)}
                     </span>
                     <span>
-                      {uploadProgress.speedBps > 0 ? `${formatBytes(uploadProgress.speedBps)}/s` : 'Calculating speed...'}
+                      {uploadProgress.speedBps > 0 ? `${formatBytes(uploadProgress.speedBps)}/s` : '—'}
                     </span>
                     <span>
                       {uploadProgress.percent >= 100 ? 'Finalizing...' : formatEta(uploadProgress.secondsLeft)}
@@ -438,11 +652,79 @@ const CourseCurriculum = ({ course, onUpdate, showNotification }) => {
               )}
 
               <div className="create-form__actions">
-                <button type="button" className="create-form__cancel" onClick={() => setShowLessonModal(false)} disabled={loading}>
+                <button
+                  type="button"
+                  className="create-form__cancel"
+                  onClick={loading ? handleCancelUpload : () => setShowLessonModal(false)}
+                >
+                  {loading ? 'Cancel Upload' : 'Cancel'}
+                </button>
+                <button type="submit" className="create-form__submit" disabled={loading}>
+                  {loading ? <span className="login__spinner" /> : 'Add Lesson'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* --- EDIT LESSON MODAL --- */}
+      {showEditLessonModal && (
+        <div className="modal-overlay" onClick={() => !loading && setShowEditLessonModal(false)}>
+          <div className="modal modal--sm" onClick={(e) => e.stopPropagation()}>
+            <button className="modal__close" onClick={() => setShowEditLessonModal(false)} disabled={loading}>
+              <HiOutlineXMark />
+            </button>
+            <h2 className="modal__title">Edit Lesson</h2>
+            <form className="create-form" onSubmit={submitEditLesson}>
+              <div className="create-form__field">
+                <label>Lesson Title *</label>
+                <input
+                  type="text"
+                  value={editLessonForm.title}
+                  disabled={loading}
+                  onChange={(e) => setEditLessonForm({ ...editLessonForm, title: e.target.value })}
+                  placeholder="Enter lesson title"
+                  autoFocus
+                  required
+                />
+              </div>
+
+              <div className="create-form__field">
+                <label>Sort Order</label>
+                <input
+                  type="number"
+                  value={editLessonForm.sortOrder}
+                  disabled={loading}
+                  onChange={(e) => setEditLessonForm({ ...editLessonForm, sortOrder: e.target.value })}
+                  placeholder="e.g. 1"
+                  min="0"
+                />
+              </div>
+
+              <div className="create-form__field">
+                <label className="checkbox-group" style={{ cursor: loading ? 'not-allowed' : 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={editLessonForm.isPreview}
+                    disabled={loading}
+                    onChange={(e) => setEditLessonForm({ ...editLessonForm, isPreview: e.target.checked })}
+                  />
+                  <span>Allow preview without enrollment</span>
+                </label>
+              </div>
+
+              <div className="create-form__actions">
+                <button
+                  type="button"
+                  className="create-form__cancel"
+                  onClick={() => setShowEditLessonModal(false)}
+                  disabled={loading}
+                >
                   Cancel
                 </button>
                 <button type="submit" className="create-form__submit" disabled={loading}>
-                  {loading ? <span className="login__spinner" /> : 'Upload Lesson'}
+                  {loading ? <span className="login__spinner" /> : 'Save Changes'}
                 </button>
               </div>
             </form>
