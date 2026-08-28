@@ -227,70 +227,53 @@ const LessonQuizzesModal = ({ lesson, onClose }) => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-              <div className="create-form__field">
-                <label>Option 1 *</label>
-                <input
-                  type="text"
-                  value={formData.option1}
-                  onChange={(e) => setFormData({ ...formData, option1: e.target.value })}
-                  placeholder="Paris"
-                  required
-                />
-              </div>
-              <div className="create-form__field">
-                <label>Option 2 *</label>
-                <input
-                  type="text"
-                  value={formData.option2}
-                  onChange={(e) => setFormData({ ...formData, option2: e.target.value })}
-                  placeholder="London"
-                  required
-                />
-              </div>
-              <div className="create-form__field">
-                <label>Option 3</label>
-                <input
-                  type="text"
-                  value={formData.option3}
-                  onChange={(e) => setFormData({ ...formData, option3: e.target.value })}
-                  placeholder="Berlin"
-                />
-              </div>
-              <div className="create-form__field">
-                <label>Option 4</label>
-                <input
-                  type="text"
-                  value={formData.option4}
-                  onChange={(e) => setFormData({ ...formData, option4: e.target.value })}
-                  placeholder="Madrid"
-                />
-              </div>
+              {[
+                { key: 'option1', label: 'Option 1 *', req: true, placeholder: 'e.g. Paris' },
+                { key: 'option2', label: 'Option 2 *', req: true, placeholder: 'e.g. London' },
+                { key: 'option3', label: 'Option 3', req: false, placeholder: 'e.g. Berlin' },
+                { key: 'option4', label: 'Option 4', req: false, placeholder: 'e.g. Madrid' },
+              ].map((opt, idx) => (
+                <div className="create-form__field" key={opt.key}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ margin: 0 }}>{opt.label}</label>
+                    <label style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      fontWeight: formData.correctAnswer === opt.key ? '600' : '400',
+                      color: formData.correctAnswer === opt.key ? '#10b981' : 'var(--color-text-tertiary)'
+                    }}>
+                      <input
+                        type="radio"
+                        name="correctAnswerRadio"
+                        checked={formData.correctAnswer === opt.key}
+                        onChange={() => setFormData({ ...formData, correctAnswer: opt.key })}
+                        style={{ accentColor: '#10b981', cursor: 'pointer' }}
+                      />
+                      Correct Answer
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    value={formData[opt.key]}
+                    onChange={(e) => setFormData({ ...formData, [opt.key]: e.target.value })}
+                    placeholder={opt.placeholder}
+                    required={opt.req}
+                  />
+                </div>
+              ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', alignItems: 'start' }}>
-              <div className="create-form__field">
-                <label>Correct Answer *</label>
-                <select
-                  value={formData.correctAnswer}
-                  onChange={(e) => setFormData({ ...formData, correctAnswer: e.target.value })}
-                  required
-                  style={{ width: '100%', padding: '10px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-bg-tertiary)', color: 'var(--color-text-primary)' }}
-                >
-                  <option value="" disabled>Select Correct Option</option>
-                  <option value="option1">Option 1 {formData.option1 ? `(${formData.option1})` : ''}</option>
-                  <option value="option2">Option 2 {formData.option2 ? `(${formData.option2})` : ''}</option>
-                  <option value="option3">Option 3 {formData.option3 ? `(${formData.option3})` : ''}</option>
-                  <option value="option4">Option 4 {formData.option4 ? `(${formData.option4})` : ''}</option>
-                </select>
-              </div>
-
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', alignItems: 'start' }}>
               <div className="create-form__field">
                 <label>Video Checkpoint (seconds)</label>
                 <input
                   type="number"
                   value={formData.videoCheckpoint}
                   onChange={(e) => setFormData({ ...formData, videoCheckpoint: e.target.value })}
-                  placeholder="120"
+                  placeholder="e.g. 120"
                 />
               </div>
 
