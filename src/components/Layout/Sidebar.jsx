@@ -28,14 +28,16 @@ const navItems = [
   { label: 'Notices', icon: HiOutlineBellAlert, path: '/dashboard/notices' },
 ];
 
-const Sidebar = ({ collapsed, onToggle }) => {
+const Sidebar = ({ collapsed, mobileOpen, onToggle }) => {
+  const isCollapsed = collapsed && !mobileOpen;
+
   return (
-    <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''}`}>
+    <aside className={`sidebar ${collapsed ? 'sidebar--collapsed' : ''} ${mobileOpen ? 'sidebar--mobile-open' : ''}`}>
       {/* Brand */}
       <div className="sidebar__brand">
         <div className="sidebar__logo">
           <span className="sidebar__logo-icon">💡</span>
-          {!collapsed && <span className="sidebar__logo-text">Idea Admin</span>}
+          {!isCollapsed && <span className="sidebar__logo-text">Idea Admin</span>}
         </div>
       </div>
 
@@ -53,7 +55,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
                 title={collapsed ? item.label : undefined}
               >
                 <item.icon className="sidebar__link-icon" />
-                {!collapsed && (
+                {!isCollapsed && (
                   <span className="sidebar__link-text">{item.label}</span>
                 )}
               </NavLink>
@@ -64,7 +66,7 @@ const Sidebar = ({ collapsed, onToggle }) => {
 
       {/* Collapse toggle */}
       <button className="sidebar__toggle" onClick={onToggle} title="Toggle sidebar">
-        {collapsed ? <HiChevronRight /> : <HiChevronLeft />}
+        {isCollapsed ? <HiChevronRight /> : <HiChevronLeft />}
       </button>
     </aside>
   );
