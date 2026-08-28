@@ -25,6 +25,7 @@ const navItems = [
   { label: 'Events', icon: HiOutlineCalendar, path: '/dashboard/events' },
   { label: 'Messages', icon: HiOutlineEnvelope, path: '/dashboard/messages' },
   { label: 'Sessions', icon: HiOutlineComputerDesktop, path: '/dashboard/sessions' },
+  { label: 'Notices', icon: HiOutlineBellAlert, path: '/dashboard/notices' },
 ];
 
 const Sidebar = ({ collapsed, onToggle }) => {

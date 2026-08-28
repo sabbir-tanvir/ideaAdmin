@@ -1,0 +1,238 @@
+/* ============================================
+   NOTICES PAGE
+   ============================================ */
+
+.notices-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem 0;
+  position: relative;
+}
+
+.notices-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 24px;
+}
+
+.notices-page__title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.notices-page__title-icon {
+  color: var(--color-accent);
+  font-size: 1.6rem;
+}
+
+.notices-page__subtitle {
+  color: var(--color-text-secondary);
+  margin: 4px 0 0 0;
+  font-size: 0.9rem;
+}
+
+/* ---- Toolbar ---- */
+.notices-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.notices-toolbar__left {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.notices-toolbar__search {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 350px;
+  display: flex;
+  align-items: center;
+}
+
+.notices-toolbar__search-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--color-text-tertiary);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+.notices-toolbar__search-input {
+  width: 100%;
+  padding: 10px 40px 10px 42px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  transition: border-color var(--transition-fast);
+  outline: none;
+}
+
+.notices-toolbar__search-input:focus {
+  border-color: var(--color-accent);
+}
+
+.notices-toolbar__filter {
+  padding: 10px 14px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  outline: none;
+}
+
+.notices-toolbar__filter:focus {
+  border-color: var(--color-accent);
+}
+
+/* ---- Grid View ---- */
+.notices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.notice-card {
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.notice-card:hover {
+  border-color: var(--color-border-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.notice-card--pinned {
+  border-color: #f59e0b;
+  background: rgba(245, 158, 11, 0.03);
+}
+
+.notice-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.notice-card__badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.notice-badge {
+  font-size: 0.7rem;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+  border: 1px solid currentColor;
+}
+
+.notice-badge--pinned {
+  background: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+.notice-badge--urgent {
+  background: #fee2e2;
+  color: #b91c1c;
+  border-color: #fecaca;
+}
+.notice-badge--courseupdate {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+.notice-badge--event {
+  background: #f3e8ff;
+  color: #7e22ce;
+  border-color: #e9d5ff;
+}
+.notice-badge--general {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+
+.notice-card__date {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.notice-card__title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0 0 8px 0;
+  line-height: 1.4;
+}
+
+.notice-card__excerpt {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 16px 0;
+  flex-grow: 1;
+  line-height: 1.5;
+}
+
+.notice-card__footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 12px;
+}
+
+/* Form Styles for Notice Modal */
+.form-textarea {
+  width: 100%;
+  padding: 10px 14px;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast);
+  outline: none;
+  resize: vertical;
+  font-family: inherit;
+}
+.form-textarea:focus {
+  border-color: var(--color-accent);
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+.pagination span {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
