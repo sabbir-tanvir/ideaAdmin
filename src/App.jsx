@@ -11,6 +11,7 @@ import Events from './pages/Events';
 import Messages from './pages/Messages';
 import Sessions from './pages/Sessions';
 import Notices from './pages/Notices';
+import AboutNewsVideo from './pages/AboutNewsVideo';
 import './styles/layout.css';
 
 function App() {
@@ -34,6 +35,8 @@ function App() {
         <Route path="messages" element={<Messages />} />
         <Route path="sessions" element={<Sessions />} />
         <Route path="notices" element={<Notices />} />
+        <Route path="about" element={<Navigate to="/dashboard/about/news-video" replace />} />
+        <Route path="about/news-video" element={<AboutNewsVideo />} />
         {/* <Route path="analytics" element={<Analytics />} /> */}
         {/* <Route path="notifications" element={<Notifications />} /> */}
         {/* <Route path="settings" element={<Settings />} /> */}
