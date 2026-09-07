@@ -124,19 +124,20 @@ const Blogs = () => {
     }));
   };
 
-  // ---- Activities Helpers ----
+  // ---- Activities Helpers (LIFO: New activities added at the top) ----
   const handleAddActivity = () => {
     setActivities(prev => [
-      ...prev,
       {
         id: null,
+        _key: `act-new-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         title: '',
         description: '',
-        sortOrder: prev.length,
+        sortOrder: 0,
         existingImages: [],
         newImageFiles: [],
         removeImageIds: []
-      }
+      },
+      ...prev
     ]);
   };
 
@@ -338,6 +339,7 @@ const Blogs = () => {
     setActivities(
       (blog.activities || []).map((act, index) => ({
         id: act.id,
+        _key: `act-${act.id || index}`,
         title: act.title || '',
         description: act.description || '',
         sortOrder: act.sortOrder ?? index,
@@ -743,14 +745,21 @@ const Blogs = () => {
       {/* ===== Create / Edit modal ===== */}
       {showFormModal && (
         <div className="modal-overlay" onClick={() => !formLoading && setShowFormModal(false)}>
-          <div className="modal modal--lg" onClick={(e) => e.stopPropagation()}>
-            <button className="modal__close" onClick={() => setShowFormModal(false)}>
-              <HiOutlineXMark />
-            </button>
-
-            <h2 className="modal__title">
-              {formMode === 'create' ? 'Create New Blog' : 'Edit Blog'}
-            </h2>
+          <div className="modal modal--lg modal--blog-form" onClick={(e) => e.stopPropagation()}>
+            <div className="modal__header">
+              <h2 className="modal__title">
+                {formMode === 'create' ? 'Create New Blog' : 'Edit Blog'}
+              </h2>
+              <button
+                type="button"
+                className="modal__close"
+                onClick={() => setShowFormModal(false)}
+                disabled={formLoading}
+                title="Close modal"
+              >
+                <HiOutlineXMark />
+              </button>
+            </div>
 
             <form className="create-form" onSubmit={formMode === 'create' ? handleCreate : handleEdit}>
               <div className="create-form__field">
@@ -826,80 +835,110 @@ const Blogs = () => {
 
               {/* Activities Upload */}
               <div className="create-form__field">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                  <label style={{ margin: 0 }}>Activities</label>
-                  <button type="button" className="blogs-page__add-btn" style={{ padding: '6px 12px', fontSize: '13px' }} onClick={handleAddActivity}>
+                <div className="blog-activities__header">
+                  <div>
+                    <label style={{ margin: 0, fontWeight: 600 }}>Activities ({activities.length})</label>
+                    <p style={{ margin: '2px 0 0', fontSize: '0.8rem', color: 'var(--color-text-secondary)' }}>
+                      New activities are added to the top (LIFO).
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="blogs-page__add-btn"
+                    style={{ padding: '6px 14px', fontSize: '13px' }}
+                    onClick={handleAddActivity}
+                  >
                     <HiOutlinePlus /> Add Activity
                   </button>
                 </div>
 
-                {activities.map((act, actIdx) => (
-                  <div key={actIdx} style={{ border: '1px solid #eee', padding: '15px', borderRadius: '8px', marginBottom: '15px', position: 'relative' }}>
-                    <button
-                      type="button"
-                      style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: '#ff4d4f', cursor: 'pointer' }}
-                      onClick={() => handleRemoveActivity(actIdx)}
+                {activities.map((act, actIdx) => {
+                  const actKey = act._key || act.id || actIdx;
+                  return (
+                    <div
+                      key={actKey}
+                      className={`blog-activity-card ${!act.id ? 'blog-activity-card--new' : ''}`}
                     >
-                      <HiOutlineTrash size={18} />
-                    </button>
-
-                    <div className="create-form__field" style={{ marginBottom: '10px' }}>
-                      <label>Activity Title</label>
-                      <input
-                        type="text"
-                        value={act.title}
-                        onChange={(e) => handleActivityChange(actIdx, 'title', e.target.value)}
-                        placeholder="Activity title..."
-                      />
-                    </div>
-
-                    <div className="create-form__field" style={{ marginBottom: '10px' }}>
-                      <label>Activity Description</label>
-                      <textarea
-                        value={act.description}
-                        onChange={(e) => handleActivityChange(actIdx, 'description', e.target.value)}
-                        placeholder="Activity description..."
-                        rows={3}
-                      />
-                    </div>
-
-                    <div className="create-form__field" style={{ marginBottom: '0' }}>
-                      <label>Activity Images</label>
-                      {(act.existingImages?.length > 0 || act.newImageFiles?.length > 0) && (
-                        <div className="upload-gallery-grid" style={{ marginBottom: '10px' }}>
-                          {act.existingImages?.map((img) => (
-                            <div key={`exist-act-${img.id}`} className="upload-gallery-item">
-                              <img src={getFullUrl(img.url)} alt="Activity" className="upload-gallery-item__img" />
-                              <button type="button" className="upload-gallery-item__remove" onClick={() => removeActivityExistingImage(actIdx, img.id)}>
-                                <HiOutlineXMark />
-                              </button>
-                            </div>
-                          ))}
-                          {act.newImageFiles?.map((file, fileIdx) => (
-                            <div key={`new-act-${fileIdx}`} className="upload-gallery-item">
-                              <img src={URL.createObjectURL(file)} alt={`New Activity ${fileIdx + 1}`} className="upload-gallery-item__img" />
-                              <button type="button" className="upload-gallery-item__remove" onClick={() => removeActivityNewImage(actIdx, fileIdx)}>
-                                <HiOutlineXMark />
-                              </button>
-                            </div>
-                          ))}
+                      <div className="blog-activity-card__header">
+                        <div className="blog-activity-card__badge">
+                          {!act.id ? (
+                            <span className="blog-activity-badge blog-activity-badge--new">New Activity</span>
+                          ) : (
+                            <span className="blog-activity-badge">Activity #{activities.length - actIdx}</span>
+                          )}
+                          {act.title && (
+                            <span className="blog-activity-card__preview-title">{act.title}</span>
+                          )}
                         </div>
-                      )}
-                      <div className="upload-zone upload-zone--sm" onClick={() => document.getElementById(`activity-file-${actIdx}`)?.click()}>
-                        <HiOutlinePlus className="upload-zone__icon" />
-                        <p className="upload-zone__text">Add activity images</p>
+                        <button
+                          type="button"
+                          className="blog-activity-card__remove"
+                          onClick={() => handleRemoveActivity(actIdx)}
+                          title="Remove Activity"
+                        >
+                          <HiOutlineTrash size={16} />
+                          <span>Remove</span>
+                        </button>
                       </div>
-                      <input
-                        id={`activity-file-${actIdx}`}
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        style={{ display: 'none' }}
-                        onChange={(e) => handleActivityFilesChange(actIdx, e)}
-                      />
+
+                      <div className="create-form__field" style={{ marginBottom: '12px' }}>
+                        <label>Activity Title</label>
+                        <input
+                          type="text"
+                          value={act.title}
+                          onChange={(e) => handleActivityChange(actIdx, 'title', e.target.value)}
+                          placeholder="Activity title..."
+                        />
+                      </div>
+
+                      <div className="create-form__field" style={{ marginBottom: '12px' }}>
+                        <label>Activity Description</label>
+                        <textarea
+                          value={act.description}
+                          onChange={(e) => handleActivityChange(actIdx, 'description', e.target.value)}
+                          placeholder="Activity description..."
+                          rows={3}
+                        />
+                      </div>
+
+                      <div className="create-form__field" style={{ marginBottom: '0' }}>
+                        <label>Activity Images</label>
+                        {(act.existingImages?.length > 0 || act.newImageFiles?.length > 0) && (
+                          <div className="upload-gallery-grid" style={{ marginBottom: '10px' }}>
+                            {act.existingImages?.map((img) => (
+                              <div key={`exist-act-${img.id}`} className="upload-gallery-item">
+                                <img src={getFullUrl(img.url)} alt="Activity" className="upload-gallery-item__img" />
+                                <button type="button" className="upload-gallery-item__remove" onClick={() => removeActivityExistingImage(actIdx, img.id)}>
+                                  <HiOutlineXMark />
+                                </button>
+                              </div>
+                            ))}
+                            {act.newImageFiles?.map((file, fileIdx) => (
+                              <div key={`new-act-${fileIdx}`} className="upload-gallery-item">
+                                <img src={URL.createObjectURL(file)} alt={`New Activity ${fileIdx + 1}`} className="upload-gallery-item__img" />
+                                <button type="button" className="upload-gallery-item__remove" onClick={() => removeActivityNewImage(actIdx, fileIdx)}>
+                                  <HiOutlineXMark />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="upload-zone upload-zone--sm" onClick={() => document.getElementById(`activity-file-${actKey}`)?.click()}>
+                          <HiOutlinePlus className="upload-zone__icon" />
+                          <p className="upload-zone__text">Add activity images</p>
+                        </div>
+                        <input
+                          id={`activity-file-${actKey}`}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          style={{ display: 'none' }}
+                          onChange={(e) => handleActivityFilesChange(actIdx, e)}
+                        />
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               {/* Gallery Upload */}
