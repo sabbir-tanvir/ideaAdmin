@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import API from "../api/axios";
 import CourseCurriculum from "../components/Products/CourseCurriculum";
+import CourseMaterials from "../components/Products/CourseMaterials";
 import EnrolledUsers from "../components/Products/EnrolledUsers";
 import {
   HiOutlineMagnifyingGlass,
@@ -25,6 +26,7 @@ import {
   HiOutlineCloudArrowUp,
   HiOutlinePhoto,
   HiOutlineUsers,
+  HiOutlineFolderArrowDown,
 } from "react-icons/hi2";
 
 import "../styles/products.css";
@@ -86,7 +88,7 @@ const Products = () => {
   // Detail view
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [activeDetailTab, setActiveDetailTab] = useState("curriculum"); // 'curriculum' or 'students'
+  const [activeDetailTab, setActiveDetailTab] = useState("curriculum"); // 'curriculum', 'materials', or 'students'
 
   // Create/Edit form
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -402,6 +404,17 @@ const Products = () => {
           </button>
           <button
             className={`course-detail__tab ${
+              activeDetailTab === "materials"
+                ? "course-detail__tab--active"
+                : ""
+            }`}
+            onClick={() => setActiveDetailTab("materials")}
+          >
+            <HiOutlineFolderArrowDown style={{ marginRight: "6px" }} />
+            Course Materials
+          </button>
+          <button
+            className={`course-detail__tab ${
               activeDetailTab === "students"
                 ? "course-detail__tab--active"
                 : ""
@@ -414,13 +427,20 @@ const Products = () => {
         </div>
 
         {/* Tab Content */}
-        {activeDetailTab === "curriculum" ? (
+        {activeDetailTab === "curriculum" && (
           <CourseCurriculum
             course={course}
             onUpdate={fetchCourses}
             showNotification={showNotification}
           />
-        ) : (
+        )}
+        {activeDetailTab === "materials" && (
+          <CourseMaterials
+            course={course}
+            showNotification={showNotification}
+          />
+        )}
+        {activeDetailTab === "students" && (
           <EnrolledUsers course={course} showNotification={showNotification} />
         )}
 
