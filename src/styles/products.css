@@ -269,10 +269,38 @@
   justify-content: space-between;
 }
 
+.course-card__price-group {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
 .course-card__price {
   font-size: 1.1rem;
   font-weight: 700;
   color: var(--color-accent);
+}
+
+.course-card__old-price {
+  font-size: 0.85rem;
+  color: var(--color-text-tertiary);
+  text-decoration: line-through;
+  font-weight: 500;
+}
+
+.course-card__sale-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .course-card__title {

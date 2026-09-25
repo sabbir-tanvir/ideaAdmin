@@ -104,6 +104,7 @@ const Products = () => {
     level: "BEGINNER",
     language: "English",
     price: "",
+    salePrice: "",
     status: "DRAFT",
   });
 
@@ -158,7 +159,8 @@ const Products = () => {
       duration: course.duration || "",
       level: course.level || "BEGINNER",
       language: course.language || "English",
-      price: course.price || "",
+      price: course.price ?? "",
+      salePrice: course.salePrice ?? "",
       status: course.status || "DRAFT",
     });
     setThumbnailFile(null);
@@ -175,6 +177,7 @@ const Products = () => {
       level: "BEGINNER",
       language: "English",
       price: "",
+      salePrice: "",
       status: "DRAFT",
     });
     clearThumbnail();
@@ -194,6 +197,16 @@ const Products = () => {
       fd.append("description", createForm.description);
       fd.append("duration", Number(createForm.duration) || 0);
       fd.append("price", Number(createForm.price) || 0);
+      if (
+        createForm.salePrice !== "" &&
+        createForm.salePrice !== null &&
+        createForm.salePrice !== undefined &&
+        !isNaN(Number(createForm.salePrice))
+      ) {
+        fd.append("salePrice", Number(createForm.salePrice));
+      } else {
+        fd.append("salePrice", "");
+      }
       fd.append("level", createForm.level);
       fd.append("language", createForm.language);
       fd.append("status", createForm.status);
@@ -377,7 +390,36 @@ const Products = () => {
                 <HiOutlineLanguage /> {course.language}
               </span>
               <span>
-                <HiOutlineCurrencyDollar /> ৳{course.price}
+                <HiOutlineCurrencyDollar />
+                {course.salePrice !== null &&
+                course.salePrice !== undefined &&
+                course.salePrice !== "" &&
+                Number(course.salePrice) > 0 ? (
+                  <>
+                    <strong style={{ color: "var(--color-accent)" }}>
+                      ৳{course.salePrice}
+                    </strong>
+                    <span
+                      style={{
+                        textDecoration: "line-through",
+                        color: "var(--color-text-tertiary)",
+                        marginLeft: "6px",
+                        fontSize: "0.85em",
+                      }}
+                      title="Original Price"
+                    >
+                      ৳{course.price}
+                    </span>
+                    <span
+                      className="course-card__sale-badge"
+                      style={{ marginLeft: "6px" }}
+                    >
+                      Sale
+                    </span>
+                  </>
+                ) : (
+                  <>৳{course.price}</>
+                )}
               </span>
               <span>
                 <HiOutlineBookOpen /> {totalModules(course)} modules
@@ -551,15 +593,92 @@ const Products = () => {
                     />
                   </div>
                   <div className="create-form__field">
-                    <label>Price</label>
+                    <label>Language</label>
+                    <input
+                      type="text"
+                      value={createForm.language}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          language: e.target.value,
+                        })
+                      }
+                      placeholder="e.g. English"
+                    />
+                  </div>
+                </div>
+                <div className="create-form__row">
+                  <div className="create-form__field">
+                    <label>Regular Price (৳) *</label>
                     <input
                       type="number"
                       value={createForm.price}
                       onChange={(e) =>
                         setCreateForm({ ...createForm, price: e.target.value })
                       }
-                      placeholder="e.g. 500"
+                      placeholder="e.g. 1500"
+                      required
                     />
+                    <span
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--color-text-tertiary)",
+                      }}
+                    >
+                      Original price
+                    </span>
+                  </div>
+                  <div className="create-form__field">
+                    <div
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                      }}
+                    >
+                      <label>Sale Price (৳)</label>
+                      {createForm.salePrice !== "" &&
+                        createForm.salePrice !== null && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setCreateForm((prev) => ({
+                                ...prev,
+                                salePrice: "",
+                              }))
+                            }
+                            style={{
+                              background: "none",
+                              border: "none",
+                              color: "var(--color-danger)",
+                              fontSize: "0.75rem",
+                              cursor: "pointer",
+                              padding: 0,
+                            }}
+                          >
+                            Remove Sale
+                          </button>
+                        )}
+                    </div>
+                    <input
+                      type="number"
+                      value={createForm.salePrice}
+                      onChange={(e) =>
+                        setCreateForm({
+                          ...createForm,
+                          salePrice: e.target.value,
+                        })
+                      }
+                      placeholder="e.g. 1200 (optional)"
+                    />
+                    <span
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "var(--color-text-tertiary)",
+                      }}
+                    >
+                      New price (leave empty to remove)
+                    </span>
                   </div>
                 </div>
                 <div className="create-form__row">
@@ -575,20 +694,6 @@ const Products = () => {
                       <option value="INTERMEDIATE">Intermediate</option>
                       <option value="ADVANCED">Advanced</option>
                     </select>
-                  </div>
-                  <div className="create-form__field">
-                    <label>Language</label>
-                    <input
-                      type="text"
-                      value={createForm.language}
-                      onChange={(e) =>
-                        setCreateForm({
-                          ...createForm,
-                          language: e.target.value,
-                        })
-                      }
-                      placeholder="e.g. English"
-                    />
                   </div>
                   <div className="create-form__field">
                     <label>Status</label>
@@ -833,7 +938,27 @@ const Products = () => {
                   >
                     {course.level}
                   </span>
-                  <span className="course-card__price">৳{course.price}</span>
+                  <div className="course-card__price-group">
+                    {course.salePrice !== null &&
+                    course.salePrice !== undefined &&
+                    course.salePrice !== "" &&
+                    Number(course.salePrice) > 0 ? (
+                      <>
+                        <span className="course-card__price">
+                          ৳{course.salePrice}
+                        </span>
+                        <span
+                          className="course-card__old-price"
+                          title="Original Price"
+                        >
+                          ৳{course.price}
+                        </span>
+                        <span className="course-card__sale-badge">Sale</span>
+                      </>
+                    ) : (
+                      <span className="course-card__price">৳{course.price}</span>
+                    )}
+                  </div>
                 </div>
 
                 <h3 className="course-card__title">{course.title}</h3>
@@ -959,7 +1084,7 @@ const Products = () => {
                 />
               </div>
 
-              <div className="create-form__row create-form__row--3">
+              <div className="create-form__row">
                 <div className="create-form__field">
                   <label>Duration (seconds)</label>
                   <input
@@ -973,18 +1098,6 @@ const Products = () => {
                   />
                 </div>
                 <div className="create-form__field">
-                  <label>Price (৳)</label>
-                  <input
-                    type="number"
-                    value={createForm.price}
-                    onChange={(e) =>
-                      setCreateForm({ ...createForm, price: e.target.value })
-                    }
-                    placeholder="2200"
-                    id="course-price-input"
-                  />
-                </div>
-                <div className="create-form__field">
                   <label>Language</label>
                   <input
                     type="text"
@@ -995,6 +1108,83 @@ const Products = () => {
                     placeholder="English"
                     id="course-lang-input"
                   />
+                </div>
+              </div>
+
+              <div className="create-form__row">
+                <div className="create-form__field">
+                  <label>Regular Price (৳) *</label>
+                  <input
+                    type="number"
+                    value={createForm.price}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, price: e.target.value })
+                    }
+                    placeholder="1500"
+                    id="course-price-input"
+                    required
+                  />
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "var(--color-text-tertiary)",
+                    }}
+                  >
+                    Original price
+                  </span>
+                </div>
+                <div className="create-form__field">
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <label>Sale Price (৳)</label>
+                    {createForm.salePrice !== "" &&
+                      createForm.salePrice !== null && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCreateForm((prev) => ({
+                              ...prev,
+                              salePrice: "",
+                            }))
+                          }
+                          style={{
+                            background: "none",
+                            border: "none",
+                            color: "var(--color-danger)",
+                            fontSize: "0.75rem",
+                            cursor: "pointer",
+                            padding: 0,
+                          }}
+                        >
+                          Remove Sale
+                        </button>
+                      )}
+                  </div>
+                  <input
+                    type="number"
+                    value={createForm.salePrice}
+                    onChange={(e) =>
+                      setCreateForm({
+                        ...createForm,
+                        salePrice: e.target.value,
+                      })
+                    }
+                    placeholder="e.g. 1200 (optional)"
+                    id="course-saleprice-input"
+                  />
+                  <span
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "var(--color-text-tertiary)",
+                    }}
+                  >
+                    New price (leave empty to remove)
+                  </span>
                 </div>
               </div>
 
