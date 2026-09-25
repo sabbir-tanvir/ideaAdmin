@@ -18,6 +18,9 @@ import {
 import '../styles/users.css';
 
 const Users = () => {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://api.idealessons.com/api/v1';
+  const serverOrigin = apiBase.replace(/\/api(\/v\d+)?\/?$/, '');
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -241,8 +244,12 @@ const Users = () => {
                     <td className="users-table__id">#{user.id}</td>
                     <td>
                       <div className="users-table__user">
-                        <div className="users-table__avatar">
-                          {user.name?.charAt(0)?.toUpperCase() || '?'}
+                        <div className="users-table__avatar" style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
+                          <img
+                            src={user.avatar ? `${serverOrigin}${user.avatar}` : "/default-avatar.png"}
+                            alt={user.name}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                          />
                         </div>
                         <span className="users-table__name">{user.name}</span>
                       </div>
@@ -318,8 +325,12 @@ const Users = () => {
             ) : selectedUser ? (
               <>
                 <div className="modal__header">
-                  <div className="modal__avatar">
-                    {selectedUser.name?.charAt(0)?.toUpperCase() || '?'}
+                  <div className="modal__avatar" style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
+                    <img
+                      src={selectedUser.avatar ? `${serverOrigin}${selectedUser.avatar}` : "/default-avatar.png"}
+                      alt={selectedUser.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
                   </div>
                   <div>
                     <h2 className="modal__name">{selectedUser.name}</h2>

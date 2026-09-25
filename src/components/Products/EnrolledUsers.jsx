@@ -10,6 +10,9 @@ import {
 } from 'react-icons/hi2';
 
 const EnrolledUsers = ({ course, showNotification }) => {
+  const apiBase = import.meta.env.VITE_API_BASE_URL || 'https://api.idealessons.com/api/v1';
+  const serverOrigin = apiBase.replace(/\/api(\/v\d+)?\/?$/, '');
+
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -149,8 +152,12 @@ const EnrolledUsers = ({ course, showNotification }) => {
                 return (
                   <tr key={enrollment.id} className="enrolled-users__row">
                     <td className="enrolled-users__cell enrolled-users__cell--name">
-                      <div className="enrolled-users__cell-avatar">
-                        <HiOutlineUser />
+                      <div className="enrolled-users__cell-avatar" style={{ padding: 0, overflow: 'hidden', background: 'transparent' }}>
+                        <img
+                          src={user.avatar ? `${serverOrigin}${user.avatar}` : "/default-avatar.png"}
+                          alt={user.name}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
                       </div>
                       <span>{user.name || '—'}</span>
                     </td>
