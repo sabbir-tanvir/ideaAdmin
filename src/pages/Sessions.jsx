@@ -63,7 +63,7 @@ const Sessions = () => {
       if (res.data.success) {
         setSessions(res.data.sessions || []);
         setTotalPages(res.data.totalPages || 1);
-        setTotalSessions(res.data.total || 0);
+        setTotalSessions(res.data.totalSessions ?? res.data.total ?? 0);
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to load sessions');
@@ -151,7 +151,7 @@ const Sessions = () => {
           <input
             type="text"
             className="sessions-toolbar__search-input"
-            placeholder="Search by email address..."
+            placeholder="Search by email or name..."
             value={searchEmail}
             onChange={(e) => setSearchEmail(e.target.value)}
           />
@@ -170,7 +170,7 @@ const Sessions = () => {
             <thead>
               <tr>
                 <th style={{ width: '40px' }}>#</th>
-                <th>Session ID</th>
+                <th>User ID</th>
                 <th>User</th>
                 <th>Device / Client</th>
                 <th>Active Sessions</th>
@@ -180,14 +180,14 @@ const Sessions = () => {
             </thead>
             <tbody>
               {sessions.map((sess, index) => {
-                const userCount = sessions.filter(s => s.userId === sess.userId).length;
+                const userCount = sess.sessions !== undefined ? sess.sessions : sessions.filter(s => s.userId === sess.userId).length;
                 return (
-                  <tr key={sess.id}>
+                  <tr key={sess.id || sess.userId || sess.user?.id || index}>
                     <td style={{ color: 'var(--color-text-tertiary)' }}>
                       {(page - 1) * 10 + index + 1}
                     </td>
                     <td style={{ fontFamily: 'monospace', color: 'var(--color-text-tertiary)' }}>
-                      {sess.id.slice(0, 8)}...
+                      {sess.id ? sess.id.slice(0, 8) + '...' : '#' + (sess.userId || sess.user?.id || index + 1)}
                     </td>
                     <td>
                       <div className="session-user">
@@ -202,7 +202,7 @@ const Sessions = () => {
                     </td>
                     <td>
                       <span className="session-device" title={sess.userAgent}>
-                        {sess.userAgent || 'Unknown Device'}
+                        {sess.userAgent || (userCount + " Active Device" + (userCount !== 1 ? "s" : ""))}
                       </span>
                     </td>
                     <td>
@@ -222,8 +222,8 @@ const Sessions = () => {
                       </button>
                       <button 
                         className="session-action-btn session-action-btn--delete"
-                        title="Delete Session"
-                        onClick={() => confirmDelete('session', { id: sess.id, name: 'this session' })}
+                        title={sess.id ? "Delete Session" : "Logout from all devices"}
+                        onClick={() => sess.id ? confirmDelete('session', { id: sess.id, name: 'this session' }) : confirmDelete('user_all', { id: sess.userId || sess.user?.id, name: sess.user?.name || 'this user' })}
                       >
                         <HiOutlineTrash />
                       </button>
