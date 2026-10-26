@@ -172,7 +172,6 @@ const Sessions = () => {
                 <th style={{ width: '40px' }}>#</th>
                 <th>User ID</th>
                 <th>User</th>
-                <th>Device / Client</th>
                 <th>Active Sessions</th>
                 <th>Created At</th>
                 <th style={{ textAlign: 'right' }}>Actions</th>
@@ -199,11 +198,6 @@ const Sessions = () => {
                           <span className="session-user__email">{sess.user?.email || 'N/A'}</span>
                         </div>
                       </div>
-                    </td>
-                    <td>
-                      <span className="session-device" title={sess.userAgent}>
-                        {sess.userAgent || (userCount + " Active Device" + (userCount !== 1 ? "s" : ""))}
-                      </span>
                     </td>
                     <td>
                       <span className="status-badge status-badge--published" style={{ background: 'rgba(139, 92, 246, 0.15)', color: 'var(--color-accent)'}}>
